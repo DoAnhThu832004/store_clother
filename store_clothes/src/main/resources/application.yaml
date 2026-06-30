@@ -1,0 +1,70 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /clothes
+
+spring:
+  datasource:
+    url: ${DBMS_CONNECTION:jdbc:mysql://localhost:3306/store_clothes?useSSL=false&serverTimezone=Asia/Ho_Chi_Minh&allowPublicKeyRetrieval=true&rewriteBatchedStatements=true}
+    driverClassName: "com.mysql.cj.jdbc.Driver"
+    password: ${DBMS_PASSWORD:root}
+    username: ${DBMS_USERNAME:root}
+    hikari:
+      maximum-pool-size: 10
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+
+  jpa:
+    hibernate:
+      # update: Hibernate tự update schema theo entity (dùng cho dev).
+      # Chuyển sang 'validate' hoặc 'none' khi deploy production.
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        format_sql: true
+        # Batch insert/update để tối ưu hiệu năng khi lưu nhiều variant cùng lúc
+        jdbc:
+          batch_size: 50
+          batch_versioned_data: true
+        order_inserts: true
+        order_updates: true
+
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: Asia/Ho_Chi_Minh
+    serialization:
+      write-dates-as-timestamps: false
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui/index.html
+    tags-sorter: alpha
+    operations-sorter: alpha
+
+logging:
+  level:
+    com.example.store_clothes: DEBUG
+    org.hibernate.SQL: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+# ============================================================
+# JWT Configuration
+# ============================================================
+jwt:
+  # Secret key dùng để ký JWT — THAY BẰNG GIÁ TRỊ THỰC TRƯỚC KHI DEPLOY!
+  # Phải là chuỗi Base64-encoded >= 256 bit (32 bytes).
+  # Tạo bằng lệnh: openssl rand -base64 32
+  # Trong production: Lấy từ biến môi trường: ${JWT_SECRET}
+  secret: ${JWT_SECRET:dGhpc2lzYXZlcnlsb25nc2VjcmV0a2V5Zm9yanduYXV0aHN5c3RlbTI2Cg==}
+
+  # Access Token hết hạn sau 24 giờ (86400000 ms)
+  access-token-expiration: ${JWT_ACCESS_EXPIRATION:86400000}
+
+  # Refresh Token hết hạn sau 7 ngày (604800000 ms)
+  refresh-token-expiration: ${JWT_REFRESH_EXPIRATION:604800000}

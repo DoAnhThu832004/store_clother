@@ -1,0 +1,552 @@
+﻿[INFO] Scanning for projects...
+[INFO] 
+[INFO] ---------------------< com.example:store_clothes >----------------------
+[INFO] Building  0.0.1-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- clean:3.4.1:clean (default-clean) @ store_clothes ---
+[INFO] Deleting D:\SpringBoot\store_clothes\store_clothes\target
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ store_clothes ---
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] Copying 0 resource from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.14.1:compile (default-compile) @ store_clothes ---
+[INFO] Recompiling the module because of changed source code.
+[INFO] Compiling 22 source files with javac [debug parameters release 17] to target\classes
+[INFO] -------------------------------------------------------------
+[ERROR] COMPILATION ERROR : 
+[INFO] -------------------------------------------------------------
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/controller/ProductController.java:[60,9] cannot find symbol
+  symbol:   variable log
+  location: class com.example.store_clothes.controller.ProductController
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/controller/ProductController.java:[100,9] cannot find symbol
+  symbol:   variable log
+  location: class com.example.store_clothes.controller.ProductController
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/controller/ProductController.java:[125,9] cannot find symbol
+  symbol:   variable log
+  location: class com.example.store_clothes.controller.ProductController
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/controller/ProductController.java:[151,9] cannot find symbol
+  symbol:   variable log
+  location: class com.example.store_clothes.controller.ProductController
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/controller/ProductController.java:[175,9] cannot find symbol
+  symbol:   variable log
+  location: class com.example.store_clothes.controller.ProductController
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/controller/ProductController.java:[203,9] cannot find symbol
+  symbol:   variable log
+  location: class com.example.store_clothes.controller.ProductController
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/dto/response/ApiResponse.java:[53,27] cannot find symbol
+  symbol:   method <T>builder()
+  location: class com.example.store_clothes.dto.response.ApiResponse
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/dto/response/ApiResponse.java:[65,27] cannot find symbol
+  symbol:   method <T>builder()
+  location: class com.example.store_clothes.dto.response.ApiResponse
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/dto/response/ApiResponse.java:[75,27] cannot find symbol
+  symbol:   method <T>builder()
+  location: class com.example.store_clothes.dto.response.ApiResponse
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/dto/response/ApiResponse.java:[86,27] cannot find symbol
+  symbol:   method <T>builder()
+  location: class com.example.store_clothes.dto.response.ApiResponse
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/dto/response/ProductResponse.java:[46,24] cannot find symbol
+  symbol:   method getId()
+  location: variable product of type com.example.store_clothes.entity.Product
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/dto/response/ProductResponse.java:[47,24] cannot find symbol
+  symbol:   method getName()
+  location: variable product of type com.example.store_clothes.entity.Product
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/dto/response/ProductResponse.java:[48,24] cannot find symbol
+  symbol:   method getCode()
+  location: variable product of type com.example.store_clothes.entity.Product
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/dto/response/ProductResponse.java:[49,24] cannot find symbol
+  symbol:   method getDescription()
+  location: variable product of type com.example.store_clothes.entity.Product
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/dto/response/ProductResponse.java:[50,24] cannot find symbol
+  symbol:   method getStatus()
+  location: variable product of type com.example.store_clothes.entity.Product
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/dto/response/ProductResponse.java:[51,24] cannot find symbol
+  symbol:   method getVariants()
+  location: variable product of type com.example.store_clothes.entity.Product
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/dto/response/ProductResponse.java:[54,24] cannot find symbol
+  symbol:   method getCreatedAt()
+  location: variable product of type com.example.store_clothes.entity.Product
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/dto/response/ProductResponse.java:[55,24] cannot find symbol
+  symbol:   method getUpdatedAt()
+  location: variable product of type com.example.store_clothes.entity.Product
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/dto/response/VariantResponse.java:[44,24] cannot find symbol
+  symbol:   method getId()
+  location: variable variant of type com.example.store_clothes.entity.ProductVariant
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/dto/response/VariantResponse.java:[45,24] cannot find symbol
+  symbol:   method getSku()
+  location: variable variant of type com.example.store_clothes.entity.ProductVariant
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/dto/response/VariantResponse.java:[46,24] cannot find symbol
+  symbol:   method getBarcode()
+  location: variable variant of type com.example.store_clothes.entity.ProductVariant
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/dto/response/VariantResponse.java:[47,24] cannot find symbol
+  symbol:   method getColor()
+  location: variable variant of type com.example.store_clothes.entity.ProductVariant
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/dto/response/VariantResponse.java:[48,24] cannot find symbol
+  symbol:   method getSize()
+  location: variable variant of type com.example.store_clothes.entity.ProductVariant
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/dto/response/VariantResponse.java:[49,24] cannot find symbol
+  symbol:   method getImportPrice()
+  location: variable variant of type com.example.store_clothes.entity.ProductVariant
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/dto/response/VariantResponse.java:[50,24] cannot find symbol
+  symbol:   method getSalePrice()
+  location: variable variant of type com.example.store_clothes.entity.ProductVariant
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/dto/response/VariantResponse.java:[51,24] cannot find symbol
+  symbol:   method getInventory()
+  location: variable variant of type com.example.store_clothes.entity.ProductVariant
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/dto/response/VariantResponse.java:[52,24] cannot find symbol
+  symbol:   method getStatus()
+  location: variable variant of type com.example.store_clothes.entity.ProductVariant
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/dto/response/VariantResponse.java:[54,24] cannot find symbol
+  symbol:   method getProduct()
+  location: variable variant of type com.example.store_clothes.entity.ProductVariant
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/dto/response/VariantResponse.java:[54,55] cannot find symbol
+  symbol:   method getProduct()
+  location: variable variant of type com.example.store_clothes.entity.ProductVariant
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/dto/response/VariantResponse.java:[55,24] cannot find symbol
+  symbol:   method getProduct()
+  location: variable variant of type com.example.store_clothes.entity.ProductVariant
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/dto/response/VariantResponse.java:[55,55] cannot find symbol
+  symbol:   method getProduct()
+  location: variable variant of type com.example.store_clothes.entity.ProductVariant
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/dto/response/VariantResponse.java:[56,24] cannot find symbol
+  symbol:   method getCreatedAt()
+  location: variable variant of type com.example.store_clothes.entity.ProductVariant
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/dto/response/VariantResponse.java:[57,24] cannot find symbol
+  symbol:   method getUpdatedAt()
+  location: variable variant of type com.example.store_clothes.entity.ProductVariant
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/dto/response/ProductMatrixResponse.java:[101,24] cannot find symbol
+  symbol:   method getId()
+  location: variable product of type com.example.store_clothes.entity.Product
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/dto/response/ProductMatrixResponse.java:[102,24] cannot find symbol
+  symbol:   method getName()
+  location: variable product of type com.example.store_clothes.entity.Product
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/dto/response/ProductMatrixResponse.java:[103,24] cannot find symbol
+  symbol:   method getCode()
+  location: variable product of type com.example.store_clothes.entity.Product
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/dto/response/ProductMatrixResponse.java:[104,24] cannot find symbol
+  symbol:   method getDescription()
+  location: variable product of type com.example.store_clothes.entity.Product
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/dto/response/ProductMatrixResponse.java:[105,24] cannot find symbol
+  symbol:   method getStatus()
+  location: variable product of type com.example.store_clothes.entity.Product
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/dto/response/ProductMatrixResponse.java:[110,24] cannot find symbol
+  symbol:   method getCreatedAt()
+  location: variable product of type com.example.store_clothes.entity.Product
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/entity/Product.java:[93,16] cannot find symbol
+  symbol:   method setProduct(com.example.store_clothes.entity.Product)
+  location: variable variant of type com.example.store_clothes.entity.ProductVariant
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/entity/Product.java:[101,16] cannot find symbol
+  symbol:   method setProduct(<nulltype>)
+  location: variable variant of type com.example.store_clothes.entity.ProductVariant
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/exception/GlobalExceptionHandler.java:[38,9] cannot find symbol
+  symbol:   variable log
+  location: class com.example.store_clothes.exception.GlobalExceptionHandler
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/exception/GlobalExceptionHandler.java:[59,9] cannot find symbol
+  symbol:   variable log
+  location: class com.example.store_clothes.exception.GlobalExceptionHandler
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/exception/GlobalExceptionHandler.java:[62,34] cannot find symbol
+  symbol:   method <java.util.Map<java.lang.String,java.lang.String>>builder()
+  location: class com.example.store_clothes.dto.response.ApiResponse
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/exception/GlobalExceptionHandler.java:[75,9] cannot find symbol
+  symbol:   variable log
+  location: class com.example.store_clothes.exception.GlobalExceptionHandler
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/exception/GlobalExceptionHandler.java:[89,9] cannot find symbol
+  symbol:   variable log
+  location: class com.example.store_clothes.exception.GlobalExceptionHandler
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/exception/GlobalExceptionHandler.java:[90,19] cannot find symbol
+  symbol:   method getSku()
+  location: variable ex of type com.example.store_clothes.exception.InsufficientStockException
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/exception/GlobalExceptionHandler.java:[90,32] cannot find symbol
+  symbol:   method getRequested()
+  location: variable ex of type com.example.store_clothes.exception.InsufficientStockException
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/exception/GlobalExceptionHandler.java:[90,51] cannot find symbol
+  symbol:   method getAvailable()
+  location: variable ex of type com.example.store_clothes.exception.InsufficientStockException
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/exception/GlobalExceptionHandler.java:[93,26] cannot find symbol
+  symbol:   method getSku()
+  location: variable ex of type com.example.store_clothes.exception.InsufficientStockException
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/exception/GlobalExceptionHandler.java:[94,32] cannot find symbol
+  symbol:   method getRequested()
+  location: variable ex of type com.example.store_clothes.exception.InsufficientStockException
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/exception/GlobalExceptionHandler.java:[95,32] cannot find symbol
+  symbol:   method getAvailable()
+  location: variable ex of type com.example.store_clothes.exception.InsufficientStockException
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/exception/GlobalExceptionHandler.java:[100,34] cannot find symbol
+  symbol:   method <java.util.Map<java.lang.String,java.lang.Object>>builder()
+  location: class com.example.store_clothes.dto.response.ApiResponse
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/exception/GlobalExceptionHandler.java:[113,9] cannot find symbol
+  symbol:   variable log
+  location: class com.example.store_clothes.exception.GlobalExceptionHandler
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/exception/GlobalExceptionHandler.java:[125,9] cannot find symbol
+  symbol:   variable log
+  location: class com.example.store_clothes.exception.GlobalExceptionHandler
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/exception/GlobalExceptionHandler.java:[140,9] cannot find symbol
+  symbol:   variable log
+  location: class com.example.store_clothes.exception.GlobalExceptionHandler
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/service/impl/ProductServiceImpl.java:[78,9] cannot find symbol
+  symbol:   variable log
+  location: class com.example.store_clothes.service.impl.ProductServiceImpl
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/service/impl/ProductServiceImpl.java:[92,34] cannot find symbol
+  symbol:   method builder()
+  location: class com.example.store_clothes.entity.Product
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/service/impl/ProductServiceImpl.java:[111,9] cannot find symbol
+  symbol:   variable log
+  location: class com.example.store_clothes.service.impl.ProductServiceImpl
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/service/impl/ProductServiceImpl.java:[111,76] cannot find symbol
+  symbol:   method getId()
+  location: variable savedProduct of type com.example.store_clothes.entity.Product
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/service/impl/ProductServiceImpl.java:[111,98] cannot find symbol
+  symbol:   method getCode()
+  location: variable savedProduct of type com.example.store_clothes.entity.Product
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/service/impl/ProductServiceImpl.java:[116,90] cannot find symbol
+  symbol:   method getId()
+  location: variable savedProduct of type com.example.store_clothes.entity.Product
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/service/impl/ProductServiceImpl.java:[135,9] cannot find symbol
+  symbol:   variable log
+  location: class com.example.store_clothes.service.impl.ProductServiceImpl
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/service/impl/ProductServiceImpl.java:[144,9] cannot find symbol
+  symbol:   variable log
+  location: class com.example.store_clothes.service.impl.ProductServiceImpl
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/service/impl/ProductServiceImpl.java:[144,74] cannot find symbol
+  symbol:   method getProduct()
+  location: variable variant of type com.example.store_clothes.entity.ProductVariant
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/service/impl/ProductServiceImpl.java:[156,9] cannot find symbol
+  symbol:   variable log
+  location: class com.example.store_clothes.service.impl.ProductServiceImpl
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/service/impl/ProductServiceImpl.java:[163,9] cannot find symbol
+  symbol:   variable log
+  location: class com.example.store_clothes.service.impl.ProductServiceImpl
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/service/impl/ProductServiceImpl.java:[163,82] cannot find symbol
+  symbol:   method getProduct()
+  location: variable variant of type com.example.store_clothes.entity.ProductVariant
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/service/impl/ProductServiceImpl.java:[174,9] cannot find symbol
+  symbol:   variable log
+  location: class com.example.store_clothes.service.impl.ProductServiceImpl
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/service/impl/ProductServiceImpl.java:[227,9] cannot find symbol
+  symbol:   variable log
+  location: class com.example.store_clothes.service.impl.ProductServiceImpl
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/service/impl/ProductServiceImpl.java:[244,9] cannot find symbol
+  symbol:   variable log
+  location: class com.example.store_clothes.service.impl.ProductServiceImpl
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/service/impl/ProductServiceImpl.java:[256,34] cannot find symbol
+  symbol:   method builder()
+  location: class com.example.store_clothes.entity.Product
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/service/impl/ProductServiceImpl.java:[264,9] cannot find symbol
+  symbol:   variable log
+  location: class com.example.store_clothes.service.impl.ProductServiceImpl
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/service/impl/ProductServiceImpl.java:[264,64] cannot find symbol
+  symbol:   method getId()
+  location: variable product of type com.example.store_clothes.entity.Product
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/service/impl/ProductServiceImpl.java:[264,81] cannot find symbol
+  symbol:   method getCode()
+  location: variable product of type com.example.store_clothes.entity.Product
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/service/impl/ProductServiceImpl.java:[270,9] cannot find symbol
+  symbol:   variable log
+  location: class com.example.store_clothes.service.impl.ProductServiceImpl
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/service/impl/ProductServiceImpl.java:[275,9] cannot find symbol
+  symbol:   variable log
+  location: class com.example.store_clothes.service.impl.ProductServiceImpl
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/service/impl/ProductServiceImpl.java:[291,56] cannot find symbol
+  symbol:   method builder()
+  location: class com.example.store_clothes.entity.ProductVariant
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/service/impl/ProductServiceImpl.java:[303,17] cannot find symbol
+  symbol:   variable log
+  location: class com.example.store_clothes.service.impl.ProductServiceImpl
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/service/impl/ProductServiceImpl.java:[314,9] cannot find symbol
+  symbol:   variable log
+  location: class com.example.store_clothes.service.impl.ProductServiceImpl
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/service/impl/ProductServiceImpl.java:[314,93] cannot find symbol
+  symbol:   method getId()
+  location: variable savedProduct of type com.example.store_clothes.entity.Product
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/service/impl/ProductServiceImpl.java:[357,9] cannot find symbol
+  symbol:   variable log
+  location: class com.example.store_clothes.service.impl.ProductServiceImpl
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/service/impl/ProductServiceImpl.java:[371,9] cannot find symbol
+  symbol:   variable log
+  location: class com.example.store_clothes.service.impl.ProductServiceImpl
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/service/impl/ProductServiceImpl.java:[379,9] cannot find symbol
+  symbol:   variable log
+  location: class com.example.store_clothes.service.impl.ProductServiceImpl
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/service/impl/ProductServiceImpl.java:[379,86] cannot find symbol
+  symbol:   method getCode()
+  location: variable product of type com.example.store_clothes.entity.Product
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/service/impl/ProductServiceImpl.java:[423,30] cannot find symbol
+  symbol:   method builder()
+  location: class com.example.store_clothes.entity.ProductVariant
+[INFO] 86 errors 
+[INFO] -------------------------------------------------------------
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  8.371 s
+[INFO] Finished at: 2026-06-24T20:06:10+07:00
+[INFO] ------------------------------------------------------------------------
+[ERROR] Failed to execute goal org.apache.maven.plugins:maven-compiler-plugin:3.14.1:compile (default-compile) on project store_clothes: Compilation failure: Compilation failure: 
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/controller/ProductController.java:[60,9] cannot find symbol
+[ERROR]   symbol:   variable log
+[ERROR]   location: class com.example.store_clothes.controller.ProductController
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/controller/ProductController.java:[100,9] cannot find symbol
+[ERROR]   symbol:   variable log
+[ERROR]   location: class com.example.store_clothes.controller.ProductController
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/controller/ProductController.java:[125,9] cannot find symbol
+[ERROR]   symbol:   variable log
+[ERROR]   location: class com.example.store_clothes.controller.ProductController
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/controller/ProductController.java:[151,9] cannot find symbol
+[ERROR]   symbol:   variable log
+[ERROR]   location: class com.example.store_clothes.controller.ProductController
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/controller/ProductController.java:[175,9] cannot find symbol
+[ERROR]   symbol:   variable log
+[ERROR]   location: class com.example.store_clothes.controller.ProductController
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/controller/ProductController.java:[203,9] cannot find symbol
+[ERROR]   symbol:   variable log
+[ERROR]   location: class com.example.store_clothes.controller.ProductController
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/dto/response/ApiResponse.java:[53,27] cannot find symbol
+[ERROR]   symbol:   method <T>builder()
+[ERROR]   location: class com.example.store_clothes.dto.response.ApiResponse
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/dto/response/ApiResponse.java:[65,27] cannot find symbol
+[ERROR]   symbol:   method <T>builder()
+[ERROR]   location: class com.example.store_clothes.dto.response.ApiResponse
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/dto/response/ApiResponse.java:[75,27] cannot find symbol
+[ERROR]   symbol:   method <T>builder()
+[ERROR]   location: class com.example.store_clothes.dto.response.ApiResponse
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/dto/response/ApiResponse.java:[86,27] cannot find symbol
+[ERROR]   symbol:   method <T>builder()
+[ERROR]   location: class com.example.store_clothes.dto.response.ApiResponse
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/dto/response/ProductResponse.java:[46,24] cannot find symbol
+[ERROR]   symbol:   method getId()
+[ERROR]   location: variable product of type com.example.store_clothes.entity.Product
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/dto/response/ProductResponse.java:[47,24] cannot find symbol
+[ERROR]   symbol:   method getName()
+[ERROR]   location: variable product of type com.example.store_clothes.entity.Product
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/dto/response/ProductResponse.java:[48,24] cannot find symbol
+[ERROR]   symbol:   method getCode()
+[ERROR]   location: variable product of type com.example.store_clothes.entity.Product
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/dto/response/ProductResponse.java:[49,24] cannot find symbol
+[ERROR]   symbol:   method getDescription()
+[ERROR]   location: variable product of type com.example.store_clothes.entity.Product
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/dto/response/ProductResponse.java:[50,24] cannot find symbol
+[ERROR]   symbol:   method getStatus()
+[ERROR]   location: variable product of type com.example.store_clothes.entity.Product
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/dto/response/ProductResponse.java:[51,24] cannot find symbol
+[ERROR]   symbol:   method getVariants()
+[ERROR]   location: variable product of type com.example.store_clothes.entity.Product
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/dto/response/ProductResponse.java:[54,24] cannot find symbol
+[ERROR]   symbol:   method getCreatedAt()
+[ERROR]   location: variable product of type com.example.store_clothes.entity.Product
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/dto/response/ProductResponse.java:[55,24] cannot find symbol
+[ERROR]   symbol:   method getUpdatedAt()
+[ERROR]   location: variable product of type com.example.store_clothes.entity.Product
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/dto/response/VariantResponse.java:[44,24] cannot find symbol
+[ERROR]   symbol:   method getId()
+[ERROR]   location: variable variant of type com.example.store_clothes.entity.ProductVariant
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/dto/response/VariantResponse.java:[45,24] cannot find symbol
+[ERROR]   symbol:   method getSku()
+[ERROR]   location: variable variant of type com.example.store_clothes.entity.ProductVariant
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/dto/response/VariantResponse.java:[46,24] cannot find symbol
+[ERROR]   symbol:   method getBarcode()
+[ERROR]   location: variable variant of type com.example.store_clothes.entity.ProductVariant
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/dto/response/VariantResponse.java:[47,24] cannot find symbol
+[ERROR]   symbol:   method getColor()
+[ERROR]   location: variable variant of type com.example.store_clothes.entity.ProductVariant
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/dto/response/VariantResponse.java:[48,24] cannot find symbol
+[ERROR]   symbol:   method getSize()
+[ERROR]   location: variable variant of type com.example.store_clothes.entity.ProductVariant
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/dto/response/VariantResponse.java:[49,24] cannot find symbol
+[ERROR]   symbol:   method getImportPrice()
+[ERROR]   location: variable variant of type com.example.store_clothes.entity.ProductVariant
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/dto/response/VariantResponse.java:[50,24] cannot find symbol
+[ERROR]   symbol:   method getSalePrice()
+[ERROR]   location: variable variant of type com.example.store_clothes.entity.ProductVariant
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/dto/response/VariantResponse.java:[51,24] cannot find symbol
+[ERROR]   symbol:   method getInventory()
+[ERROR]   location: variable variant of type com.example.store_clothes.entity.ProductVariant
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/dto/response/VariantResponse.java:[52,24] cannot find symbol
+[ERROR]   symbol:   method getStatus()
+[ERROR]   location: variable variant of type com.example.store_clothes.entity.ProductVariant
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/dto/response/VariantResponse.java:[54,24] cannot find symbol
+[ERROR]   symbol:   method getProduct()
+[ERROR]   location: variable variant of type com.example.store_clothes.entity.ProductVariant
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/dto/response/VariantResponse.java:[54,55] cannot find symbol
+[ERROR]   symbol:   method getProduct()
+[ERROR]   location: variable variant of type com.example.store_clothes.entity.ProductVariant
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/dto/response/VariantResponse.java:[55,24] cannot find symbol
+[ERROR]   symbol:   method getProduct()
+[ERROR]   location: variable variant of type com.example.store_clothes.entity.ProductVariant
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/dto/response/VariantResponse.java:[55,55] cannot find symbol
+[ERROR]   symbol:   method getProduct()
+[ERROR]   location: variable variant of type com.example.store_clothes.entity.ProductVariant
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/dto/response/VariantResponse.java:[56,24] cannot find symbol
+[ERROR]   symbol:   method getCreatedAt()
+[ERROR]   location: variable variant of type com.example.store_clothes.entity.ProductVariant
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/dto/response/VariantResponse.java:[57,24] cannot find symbol
+[ERROR]   symbol:   method getUpdatedAt()
+[ERROR]   location: variable variant of type com.example.store_clothes.entity.ProductVariant
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/dto/response/ProductMatrixResponse.java:[101,24] cannot find symbol
+[ERROR]   symbol:   method getId()
+[ERROR]   location: variable product of type com.example.store_clothes.entity.Product
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/dto/response/ProductMatrixResponse.java:[102,24] cannot find symbol
+[ERROR]   symbol:   method getName()
+[ERROR]   location: variable product of type com.example.store_clothes.entity.Product
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/dto/response/ProductMatrixResponse.java:[103,24] cannot find symbol
+[ERROR]   symbol:   method getCode()
+[ERROR]   location: variable product of type com.example.store_clothes.entity.Product
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/dto/response/ProductMatrixResponse.java:[104,24] cannot find symbol
+[ERROR]   symbol:   method getDescription()
+[ERROR]   location: variable product of type com.example.store_clothes.entity.Product
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/dto/response/ProductMatrixResponse.java:[105,24] cannot find symbol
+[ERROR]   symbol:   method getStatus()
+[ERROR]   location: variable product of type com.example.store_clothes.entity.Product
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/dto/response/ProductMatrixResponse.java:[110,24] cannot find symbol
+[ERROR]   symbol:   method getCreatedAt()
+[ERROR]   location: variable product of type com.example.store_clothes.entity.Product
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/entity/Product.java:[93,16] cannot find symbol
+[ERROR]   symbol:   method setProduct(com.example.store_clothes.entity.Product)
+[ERROR]   location: variable variant of type com.example.store_clothes.entity.ProductVariant
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/entity/Product.java:[101,16] cannot find symbol
+[ERROR]   symbol:   method setProduct(<nulltype>)
+[ERROR]   location: variable variant of type com.example.store_clothes.entity.ProductVariant
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/exception/GlobalExceptionHandler.java:[38,9] cannot find symbol
+[ERROR]   symbol:   variable log
+[ERROR]   location: class com.example.store_clothes.exception.GlobalExceptionHandler
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/exception/GlobalExceptionHandler.java:[59,9] cannot find symbol
+[ERROR]   symbol:   variable log
+[ERROR]   location: class com.example.store_clothes.exception.GlobalExceptionHandler
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/exception/GlobalExceptionHandler.java:[62,34] cannot find symbol
+[ERROR]   symbol:   method <java.util.Map<java.lang.String,java.lang.String>>builder()
+[ERROR]   location: class com.example.store_clothes.dto.response.ApiResponse
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/exception/GlobalExceptionHandler.java:[75,9] cannot find symbol
+[ERROR]   symbol:   variable log
+[ERROR]   location: class com.example.store_clothes.exception.GlobalExceptionHandler
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/exception/GlobalExceptionHandler.java:[89,9] cannot find symbol
+[ERROR]   symbol:   variable log
+[ERROR]   location: class com.example.store_clothes.exception.GlobalExceptionHandler
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/exception/GlobalExceptionHandler.java:[90,19] cannot find symbol
+[ERROR]   symbol:   method getSku()
+[ERROR]   location: variable ex of type com.example.store_clothes.exception.InsufficientStockException
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/exception/GlobalExceptionHandler.java:[90,32] cannot find symbol
+[ERROR]   symbol:   method getRequested()
+[ERROR]   location: variable ex of type com.example.store_clothes.exception.InsufficientStockException
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/exception/GlobalExceptionHandler.java:[90,51] cannot find symbol
+[ERROR]   symbol:   method getAvailable()
+[ERROR]   location: variable ex of type com.example.store_clothes.exception.InsufficientStockException
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/exception/GlobalExceptionHandler.java:[93,26] cannot find symbol
+[ERROR]   symbol:   method getSku()
+[ERROR]   location: variable ex of type com.example.store_clothes.exception.InsufficientStockException
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/exception/GlobalExceptionHandler.java:[94,32] cannot find symbol
+[ERROR]   symbol:   method getRequested()
+[ERROR]   location: variable ex of type com.example.store_clothes.exception.InsufficientStockException
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/exception/GlobalExceptionHandler.java:[95,32] cannot find symbol
+[ERROR]   symbol:   method getAvailable()
+[ERROR]   location: variable ex of type com.example.store_clothes.exception.InsufficientStockException
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/exception/GlobalExceptionHandler.java:[100,34] cannot find symbol
+[ERROR]   symbol:   method <java.util.Map<java.lang.String,java.lang.Object>>builder()
+[ERROR]   location: class com.example.store_clothes.dto.response.ApiResponse
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/exception/GlobalExceptionHandler.java:[113,9] cannot find symbol
+[ERROR]   symbol:   variable log
+[ERROR]   location: class com.example.store_clothes.exception.GlobalExceptionHandler
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/exception/GlobalExceptionHandler.java:[125,9] cannot find symbol
+[ERROR]   symbol:   variable log
+[ERROR]   location: class com.example.store_clothes.exception.GlobalExceptionHandler
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/exception/GlobalExceptionHandler.java:[140,9] cannot find symbol
+[ERROR]   symbol:   variable log
+[ERROR]   location: class com.example.store_clothes.exception.GlobalExceptionHandler
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/service/impl/ProductServiceImpl.java:[78,9] cannot find symbol
+[ERROR]   symbol:   variable log
+[ERROR]   location: class com.example.store_clothes.service.impl.ProductServiceImpl
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/service/impl/ProductServiceImpl.java:[92,34] cannot find symbol
+[ERROR]   symbol:   method builder()
+[ERROR]   location: class com.example.store_clothes.entity.Product
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/service/impl/ProductServiceImpl.java:[111,9] cannot find symbol
+[ERROR]   symbol:   variable log
+[ERROR]   location: class com.example.store_clothes.service.impl.ProductServiceImpl
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/service/impl/ProductServiceImpl.java:[111,76] cannot find symbol
+[ERROR]   symbol:   method getId()
+[ERROR]   location: variable savedProduct of type com.example.store_clothes.entity.Product
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/service/impl/ProductServiceImpl.java:[111,98] cannot find symbol
+[ERROR]   symbol:   method getCode()
+[ERROR]   location: variable savedProduct of type com.example.store_clothes.entity.Product
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/service/impl/ProductServiceImpl.java:[116,90] cannot find symbol
+[ERROR]   symbol:   method getId()
+[ERROR]   location: variable savedProduct of type com.example.store_clothes.entity.Product
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/service/impl/ProductServiceImpl.java:[135,9] cannot find symbol
+[ERROR]   symbol:   variable log
+[ERROR]   location: class com.example.store_clothes.service.impl.ProductServiceImpl
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/service/impl/ProductServiceImpl.java:[144,9] cannot find symbol
+[ERROR]   symbol:   variable log
+[ERROR]   location: class com.example.store_clothes.service.impl.ProductServiceImpl
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/service/impl/ProductServiceImpl.java:[144,74] cannot find symbol
+[ERROR]   symbol:   method getProduct()
+[ERROR]   location: variable variant of type com.example.store_clothes.entity.ProductVariant
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/service/impl/ProductServiceImpl.java:[156,9] cannot find symbol
+[ERROR]   symbol:   variable log
+[ERROR]   location: class com.example.store_clothes.service.impl.ProductServiceImpl
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/service/impl/ProductServiceImpl.java:[163,9] cannot find symbol
+[ERROR]   symbol:   variable log
+[ERROR]   location: class com.example.store_clothes.service.impl.ProductServiceImpl
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/service/impl/ProductServiceImpl.java:[163,82] cannot find symbol
+[ERROR]   symbol:   method getProduct()
+[ERROR]   location: variable variant of type com.example.store_clothes.entity.ProductVariant
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/service/impl/ProductServiceImpl.java:[174,9] cannot find symbol
+[ERROR]   symbol:   variable log
+[ERROR]   location: class com.example.store_clothes.service.impl.ProductServiceImpl
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/service/impl/ProductServiceImpl.java:[227,9] cannot find symbol
+[ERROR]   symbol:   variable log
+[ERROR]   location: class com.example.store_clothes.service.impl.ProductServiceImpl
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/service/impl/ProductServiceImpl.java:[244,9] cannot find symbol
+[ERROR]   symbol:   variable log
+[ERROR]   location: class com.example.store_clothes.service.impl.ProductServiceImpl
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/service/impl/ProductServiceImpl.java:[256,34] cannot find symbol
+[ERROR]   symbol:   method builder()
+[ERROR]   location: class com.example.store_clothes.entity.Product
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/service/impl/ProductServiceImpl.java:[264,9] cannot find symbol
+[ERROR]   symbol:   variable log
+[ERROR]   location: class com.example.store_clothes.service.impl.ProductServiceImpl
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/service/impl/ProductServiceImpl.java:[264,64] cannot find symbol
+[ERROR]   symbol:   method getId()
+[ERROR]   location: variable product of type com.example.store_clothes.entity.Product
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/service/impl/ProductServiceImpl.java:[264,81] cannot find symbol
+[ERROR]   symbol:   method getCode()
+[ERROR]   location: variable product of type com.example.store_clothes.entity.Product
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/service/impl/ProductServiceImpl.java:[270,9] cannot find symbol
+[ERROR]   symbol:   variable log
+[ERROR]   location: class com.example.store_clothes.service.impl.ProductServiceImpl
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/service/impl/ProductServiceImpl.java:[275,9] cannot find symbol
+[ERROR]   symbol:   variable log
+[ERROR]   location: class com.example.store_clothes.service.impl.ProductServiceImpl
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/service/impl/ProductServiceImpl.java:[291,56] cannot find symbol
+[ERROR]   symbol:   method builder()
+[ERROR]   location: class com.example.store_clothes.entity.ProductVariant
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/service/impl/ProductServiceImpl.java:[303,17] cannot find symbol
+[ERROR]   symbol:   variable log
+[ERROR]   location: class com.example.store_clothes.service.impl.ProductServiceImpl
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/service/impl/ProductServiceImpl.java:[314,9] cannot find symbol
+[ERROR]   symbol:   variable log
+[ERROR]   location: class com.example.store_clothes.service.impl.ProductServiceImpl
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/service/impl/ProductServiceImpl.java:[314,93] cannot find symbol
+[ERROR]   symbol:   method getId()
+[ERROR]   location: variable savedProduct of type com.example.store_clothes.entity.Product
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/service/impl/ProductServiceImpl.java:[357,9] cannot find symbol
+[ERROR]   symbol:   variable log
+[ERROR]   location: class com.example.store_clothes.service.impl.ProductServiceImpl
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/service/impl/ProductServiceImpl.java:[371,9] cannot find symbol
+[ERROR]   symbol:   variable log
+[ERROR]   location: class com.example.store_clothes.service.impl.ProductServiceImpl
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/service/impl/ProductServiceImpl.java:[379,9] cannot find symbol
+[ERROR]   symbol:   variable log
+[ERROR]   location: class com.example.store_clothes.service.impl.ProductServiceImpl
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/service/impl/ProductServiceImpl.java:[379,86] cannot find symbol
+[ERROR]   symbol:   method getCode()
+[ERROR]   location: variable product of type com.example.store_clothes.entity.Product
+[ERROR] /D:/SpringBoot/store_clothes/store_clothes/src/main/java/com/example/store_clothes/service/impl/ProductServiceImpl.java:[423,30] cannot find symbol
+[ERROR]   symbol:   method builder()
+[ERROR]   location: class com.example.store_clothes.entity.ProductVariant
+[ERROR] -> [Help 1]
+[ERROR] 
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoFailureException
