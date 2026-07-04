@@ -51,6 +51,12 @@ public enum ErrorCode {
     /** Không thể xóa danh mục cha đang có danh mục con bên dưới */
     CATEGORY_HAS_CHILDREN(HttpStatus.CONFLICT, "Không thể xóa danh mục đang có danh mục con"),
 
+    /** Phát hiện tham chiếu vòng khi cập nhật parentId (CAT-05) */
+    CATEGORY_CIRCULAR_REFERENCE(HttpStatus.BAD_REQUEST, "Không thể gán danh mục thành con của chính nó hoặc của danh mục con nó"),
+
+    /** Không thể xóa danh mục cha khi đang có depth > 1 (tạo cháu) */
+    CATEGORY_DEPTH_EXCEEDED(HttpStatus.BAD_REQUEST, "Không thể tạo danh mục cháu — hệ thống chỉ hỗ trợ tối đa 2 cấp danh mục"),
+
     // =========================================================================
     // MODULE: NHÀ CUNG CẤP
     // =========================================================================
@@ -63,6 +69,9 @@ public enum ErrorCode {
 
     /** Số điện thoại nhà cung cấp đã tồn tại */
     SUPPLIER_PHONE_DUPLICATED(HttpStatus.CONFLICT, "Số điện thoại nhà cung cấp đã được sử dụng"),
+
+    /** Không thể xóa NCC khi còn phiếu nhập ở trạng thái DRAFT */
+    SUPPLIER_HAS_DRAFT_RECEIPTS(HttpStatus.CONFLICT, "Không thể xóa nhà cung cấp đang có phiếu nhập chưa hoàn thành"),
 
     // =========================================================================
     // MODULE: KHÁCH HÀNG

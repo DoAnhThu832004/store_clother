@@ -11,6 +11,8 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.dao.CannotAcquireLockException;
+import jakarta.persistence.OptimisticLockException;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -162,6 +164,24 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.FORBIDDEN)
                 .body(ApiResponse.error(ErrorCode.ACCESS_DENIED.name(), ErrorCode.ACCESS_DENIED.getDefaultMessage()));
+    }
+
+    /**
+     * Xử lý: Optimistic Lock Exception — Xung đột ghi đồng thời.
+     *
+     * Khi 2 Manager cùng update giá biến thể, người sau commit sẽ gặp:
+     *   ObjectOptimisticLockingFailureException (Spring wrap)
+     *   hoặc OptimisticLockException (JPA thuần).
+     * Hướng xử lý: Client nhận 409 → load lại trang → retry thủ công.
+     * → HTTP 409 Conflict
+     */
+    @ExceptionHandler({OptimisticLockException.class, ObjectOptimisticLockingFailureException.class})
+    public ResponseEntity<ApiResponse<Void>> handleOptimisticLock(Exception ex) {
+        log.warn("Optimistic lock conflict — entity đã bị sửa bởi người khác: {}", ex.getMessage());
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(ApiResponse.error("OPTIMISTIC_LOCK_CONFLICT",
+                        "Dữ liệu vừa được cập nhật bởi người khác. Vui lòng tải lại và thử lại."));
     }
 
     /**

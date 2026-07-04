@@ -33,7 +33,7 @@ import java.util.List;
 @Builder
 @SQLDelete(sql = "UPDATE orders SET is_deleted = true WHERE id = ?")
 @SQLRestriction("is_deleted = false")
-public class Order extends BaseEntity {
+public class Order extends BaseUuidEntity {
 
     /**
      * Mã hóa đơn duy nhất. Format: HD-YYYYMMDD-XXXX.

@@ -2,6 +2,10 @@ package com.example.store_clothes.service;
 
 import com.example.store_clothes.dto.request.CreateProductRequest;
 import com.example.store_clothes.dto.request.CreateProductMatrixRequest;
+import com.example.store_clothes.dto.request.UpdateProductRequest;
+import com.example.store_clothes.dto.request.AddVariantRequest;
+import com.example.store_clothes.dto.request.UpdateVariantRequest;
+import com.example.store_clothes.dto.request.StockAdjustmentRequest;
 import com.example.store_clothes.dto.response.ProductMatrixResponse;
 import com.example.store_clothes.dto.response.ProductResponse;
 import com.example.store_clothes.dto.response.VariantResponse;
@@ -106,4 +110,89 @@ public interface ProductService {
      * @throws com.example.store_clothes.exception.EntityNotFoundException nếu không tìm thấy
      */
     void deleteProduct(Long productId);
+
+    // =========================================================================
+    // TICKET P-01 — Cập nhật thông tin sản phẩm gốc
+    // =========================================================================
+
+    /**
+     * Cập nhật thông tin sản phẩm gốc (name, description, category).
+     *
+     * ⚠️ KHÔNG được phép thay đổi code sản phẩm sau khi tạo.
+     * Lý do: code là khóa nghiệp vụ bất biến được tham chiếu từ OrderItem snapshot
+     * và tất cả hệ thống tích hợp bên ngoài.
+     *
+     * @param productId ID sản phẩm cần cập nhật
+     * @param request   DTO chứa thông tin mới (name, description, categoryId)
+     * @return ProductResponse DTO sau khi cập nhật
+     */
+    ProductResponse updateProduct(Long productId, UpdateProductRequest request);
+
+    // =========================================================================
+    // TICKET PV-01 — Thêm biến thể đơn lẻ vào sản phẩm
+    // =========================================================================
+
+    /**
+     * Thêm một biến thể mới vào sản phẩm đang tồn tại.
+     *
+     * Business rules:
+     * - Sản phẩm phải ACTIVE.
+     * - SKU (nếu truyền vào) phải unique toàn hệ thống.
+     * - Nếu SKU null → tự sinh bằng VietnameseUtil.generateSku() + resolveSkuConflict().
+     * - Nếu initialInventory > 0 → ghi StockHistory với type=ADJUSTMENT, ref="INIT".
+     *
+     * @param productId ID sản phẩm cha
+     * @param request   DTO chứa thông tin biến thể mới
+     * @return VariantResponse DTO của biến thể vừa tạo
+     */
+    VariantResponse addVariant(Long productId, AddVariantRequest request);
+
+    // =========================================================================
+    // TICKET PV-02 — Cập nhật giá và thuộc tính biến thể
+    // =========================================================================
+
+    /**
+     * Cập nhật giá và/hoặc trạng thái của biến thể (patch semantics: null = không đổi).
+     *
+     * Sử dụng @Version (Optimistic Lock) trên ProductVariant để phát hiện
+     * xung đột đồng thời. Nếu 2 manager cùng cập nhật → người sau nhận HTTP 409.
+     *
+     * @param variantId ID biến thể cần cập nhật
+     * @param request   DTO chứa giá mới và/hoặc status mới
+     * @return VariantResponse DTO sau khi cập nhật
+     */
+    VariantResponse updateVariant(Long variantId, UpdateVariantRequest request);
+
+    // =========================================================================
+    // TICKET PV-02b — Điều chỉnh tồn kho thủ công
+    // =========================================================================
+
+    /**
+     * Điều chỉnh tồn kho về số lượng mới chỉ định (absolute, không phải delta).
+     *
+     * Chỉ ROLE_OWNER được phép thực hiện (enforce tại Controller với @PreAuthorize).
+     * Dùng Pessimistic Lock để đảm bảo không có race condition.
+     * Bắt buộc ghi StockHistory + AuditLog @Async.
+     *
+     * @param variantId ID biến thể cần điều chỉnh
+     * @param request   DTO chứa newQuantity và reason bắt buộc
+     */
+    void adjustStock(Long variantId, StockAdjustmentRequest request);
+
+    // =========================================================================
+    // TICKET PV-03 — Xóa mềm biến thể
+    // =========================================================================
+
+    /**
+     * Xóa mềm một biến thể sản phẩm.
+     *
+     * Điều kiện:
+     * - inventory phải = 0.
+     * - Không đang nằm trong ImportReceipt DRAFT nào.
+     *
+     * @SQLDelete tự động rename SKU để giải phóng UNIQUE constraint.
+     *
+     * @param variantId ID biến thể cần xóa
+     */
+    void deleteVariant(Long variantId);
 }

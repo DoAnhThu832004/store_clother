@@ -16,7 +16,7 @@ import java.util.List;
 @Builder
 public class OrderResponse {
 
-    private Long id;
+    private java.util.UUID id;
     private String orderCode;
     private BigDecimal totalAmount;
     private BigDecimal paidAmount;

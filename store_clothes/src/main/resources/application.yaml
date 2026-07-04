@@ -4,6 +4,12 @@ server:
     context-path: /clothes
 
 spring:
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      timeout: 2000ms
   datasource:
     url: ${DBMS_CONNECTION:jdbc:mysql://localhost:3306/store_clothes?useSSL=false&serverTimezone=Asia/Ho_Chi_Minh&allowPublicKeyRetrieval=true&rewriteBatchedStatements=true}
     driverClassName: "com.mysql.cj.jdbc.Driver"

@@ -3,23 +3,33 @@ package com.example.store_clothes.service.impl;
 import com.example.store_clothes.dto.request.CreateProductRequest;
 import com.example.store_clothes.dto.request.CreateVariantRequest;
 import com.example.store_clothes.dto.request.CreateProductMatrixRequest;
+import com.example.store_clothes.dto.request.UpdateProductRequest;
+import com.example.store_clothes.dto.request.AddVariantRequest;
+import com.example.store_clothes.dto.request.UpdateVariantRequest;
+import com.example.store_clothes.dto.request.StockAdjustmentRequest;
 import com.example.store_clothes.dto.response.ProductMatrixResponse;
 import com.example.store_clothes.dto.response.ProductResponse;
 import com.example.store_clothes.dto.response.VariantResponse;
 import com.example.store_clothes.entity.Product;
 import com.example.store_clothes.entity.ProductStatus;
 import com.example.store_clothes.entity.ProductVariant;
+import com.example.store_clothes.entity.StockHistory;
+import com.example.store_clothes.enums.TransactionType;
 import com.example.store_clothes.exception.BusinessException;
 import com.example.store_clothes.exception.EntityNotFoundException;
 import com.example.store_clothes.repository.ProductRepository;
 import com.example.store_clothes.repository.ProductVariantRepository;
+import com.example.store_clothes.repository.StockHistoryRepository;
+import com.example.store_clothes.service.AuditLogService;
 import com.example.store_clothes.service.ProductService;
 import com.example.store_clothes.util.VietnameseUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -53,6 +63,8 @@ public class ProductServiceImpl implements ProductService {
 
     private final ProductRepository productRepository;
     private final ProductVariantRepository variantRepository;
+    private final StockHistoryRepository stockHistoryRepository;
+    private final AuditLogService auditLogService;
 
     // =========================================================================
     // CREATE - Thêm mới sản phẩm
@@ -487,5 +499,385 @@ public class ProductServiceImpl implements ProductService {
             suffix++;
         }
     }
-}
 
+    /**
+     * Lấy username của người dùng hiện tại từ Spring Security Context.
+     * Dùng để ghi AuditLog với thông tin "ai đã thực hiện".
+     */
+    private String getCurrentUsername() {
+        try {
+            return SecurityContextHolder.getContext().getAuthentication().getName();
+        } catch (Exception e) {
+            return "SYSTEM";
+        }
+    }
+
+    // =========================================================================
+    // TICKET P-01 — Cập nhật thông tin sản phẩm gốc
+    // =========================================================================
+
+    /**
+     * {@inheritDoc}
+     *
+     * 💡 Senior Note — Tại sao code sản phẩm không được phép thay đổi sau khi tạo?
+     * 1. OrderItem Snapshot Integrity: Khi tạo đơn hàng, hệ thống lưu snapshot sản phẩm
+     *    (tên, code, giá) vào OrderItem để bảo toàn dữ liệu lịch sử. Nếu code thay đổi,
+     *    các báo cáo tra cứu theo code từ OrderItem cũ sẽ không tìm được sản phẩm hiện tại.
+     * 2. External System Integration: Code là "Natural Key" trong hệ thống ERP, POS,
+     *    kế toán bên ngoài. Đổi code = toàn bộ mapping trong các hệ thống tích hợp bị sai.
+     * 3. Idempotent Retry Safety: Trong distributed system, client có thể retry request.
+     *    Nếu code thay đổi được, hai lần retry có thể tạo ra hai trạng thái không nhất quán.
+     * → GIẢI PHÁP: Code là trường bất biến (immutable field), chỉ set một lần khi tạo.
+     */
+    @Override
+    @Transactional
+    public ProductResponse updateProduct(Long productId, UpdateProductRequest request) {
+        log.info("Bắt đầu cập nhật sản phẩm id={}", productId);
+
+        // ── BƯỚC 1: LOAD PRODUCT ──────────────────────────────────────────────
+        Product product = productRepository.findByIdWithVariants(productId)
+                .orElseThrow(() -> new EntityNotFoundException(
+                        String.format("Không tìm thấy sản phẩm với ID: %d", productId)
+                ));
+
+        // Snapshot trước khi sửa để ghi vào AuditLog
+        String beforeJson = String.format("{\"name\":\"%s\",\"description\":\"%s\"}",
+                product.getName(), product.getDescription());
+
+        // ── BƯỚC 2: CẬP NHẬT CÁC TRƯỜNG ĐƯỢC PHÉP ───────────────────────────
+        // KHÔNG cập nhật product.code — đây là khóa nghiệp vụ bất biến.
+        product.setName(request.name());
+        product.setDescription(request.description());
+
+        // ── BƯỚC 3: LƯU VÀ RELOAD ─────────────────────────────────────────────
+        // save() trigger dirty-check và UPDATE trong transaction hiện tại.
+        // Sau đó load lại bằng findByIdWithVariants để có đủ variants cho response.
+        productRepository.save(product);
+        log.info("Đã cập nhật sản phẩm thành công: id={}, name={}", productId, request.name());
+
+        // ── BƯỚC 4: GHI AUDIT LOG BẤT ĐỒNG BỘ ───────────────────────────────
+        // @Async + Propagation.REQUIRES_NEW: chạy trên thread riêng, transaction riêng.
+        // Nếu ghi log lỗi → không rollback transaction cập nhật sản phẩm.
+        String afterJson = String.format("{\"name\":\"%s\",\"description\":\"%s\"}",
+                request.name(), request.description());
+        String details = String.format("{\"before\":%s,\"after\":%s}", beforeJson, afterJson);
+        auditLogService.log(null, getCurrentUsername(), "UPDATE_PRODUCT", "PRODUCT", productId, details);
+
+        return ProductResponse.fromEntity(product);
+    }
+
+    // =========================================================================
+    // TICKET PV-01 — Thêm biến thể đơn lẻ vào sản phẩm
+    // =========================================================================
+
+    /**
+     * {@inheritDoc}
+     *
+     * 💡 Senior Note — Tại sao phải ghi StockHistory ngay cả khi khởi tạo kho ban đầu?
+     * 1. Audit Trail Completeness: Mọi sự thay đổi tồn kho phải có bằng chứng nguồn gốc.
+     *    Nếu biến thể được tạo với inventory=10 mà không có StockHistory, kiểm toán viên
+     *    sẽ hỏi "10 cái này từ đâu ra?" → Không có câu trả lời → vi phạm audit.
+     * 2. balanceBefore = 0: Xác nhận rõ ràng đây là lần đầu tiên hàng vào kho.
+     *    referenceCode = "INIT": Phân biệt với nhập hàng thông thường.
+     * 3. Consistency Check: Hệ thống báo cáo có thể tính tổng từ StockHistory records.
+     *    Nếu thiếu bản ghi INIT, tổng sẽ sai. Công thức: Σ(changeQuantity) = currentInventory.
+     */
+    @Override
+    @Transactional
+    public VariantResponse addVariant(Long productId, AddVariantRequest request) {
+        log.info("Bắt đầu thêm biến thể cho sản phẩm id={}", productId);
+
+        // ── BƯỚC 1: KIỂM TRA PRODUCT TỒN TẠI VÀ ACTIVE ─────────────────────
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new EntityNotFoundException(
+                        String.format("Không tìm thấy sản phẩm với ID: %d", productId)
+                ));
+
+        if (product.getStatus() != ProductStatus.ACTIVE) {
+            throw new BusinessException(
+                    String.format("Sản phẩm '%s' (id=%d) đang INACTIVE, không thể thêm biến thể.",
+                            product.getName(), productId)
+            );
+        }
+
+        // ── BƯỚC 2: XỬ LÝ SKU ────────────────────────────────────────────────
+        String finalSku;
+        if (request.sku() != null && !request.sku().isBlank()) {
+            // SKU được truyền vào → validate trùng
+            if (variantRepository.existsBySku(request.sku().toUpperCase())) {
+                throw new BusinessException(
+                        String.format("SKU '%s' đã tồn tại trong hệ thống.", request.sku())
+                );
+            }
+            finalSku = request.sku().toUpperCase();
+        } else {
+            // SKU null → tự sinh bằng VietnameseUtil + resolveSkuConflict
+            String baseSku = VietnameseUtil.generateSku(product.getName(), request.color(), request.size());
+            String skuPrefix = baseSku.replaceAll("-+$", "");
+            List<String> existingSkuList = variantRepository.findSkusWithPrefix(skuPrefix);
+            Set<String> existingSkuSet = new HashSet<>(existingSkuList);
+            finalSku = resolveSkuConflict(baseSku, existingSkuSet);
+            log.debug("SKU tự sinh: baseSku={}, finalSku={}", baseSku, finalSku);
+        }
+
+        // ── BƯỚC 3: KIỂM TRA BARCODE TRÙNG ──────────────────────────────────
+        if (request.barcode() != null && !request.barcode().isBlank()
+                && variantRepository.existsByBarcode(request.barcode())) {
+            throw new BusinessException(
+                    String.format("Barcode '%s' đã tồn tại trong hệ thống.", request.barcode())
+            );
+        }
+
+        // ── BƯỚC 4: TẠO VÀ LƯU VARIANT ──────────────────────────────────────
+        ProductVariant variant = ProductVariant.builder()
+                .sku(finalSku)
+                .barcode(request.barcode())
+                .color(request.color())
+                .size(request.size())
+                .importPrice(request.importPrice())
+                .salePrice(request.salePrice())
+                .inventory(request.initialInventory())
+                .status(ProductStatus.ACTIVE)
+                .product(product)
+                .build();
+
+        ProductVariant saved = variantRepository.save(variant);
+        log.info("Đã tạo biến thể mới: id={}, sku={}, inventory={}", saved.getId(), finalSku, request.initialInventory());
+
+        // ── BƯỚC 5: GHI STOCKHISTORY NẾU initialInventory > 0 ────────────────
+        // 💡 Mọi thay đổi tồn kho — kể cả khởi tạo — đều phải có StockHistory.
+        if (request.initialInventory() > 0) {
+            StockHistory initHistory = StockHistory.builder()
+                    .variantId(saved.getId())
+                    .changeQuantity(request.initialInventory())  // delta = initialInventory - 0
+                    .transactionType(TransactionType.ADJUSTMENT)
+                    .referenceCode("INIT")
+                    .balanceBefore(0)
+                    .balanceAfter(request.initialInventory())
+                    .createdAt(LocalDateTime.now())
+                    .build();
+            stockHistoryRepository.save(initHistory);
+            log.info("Ghi StockHistory INIT cho variant id={}, qty={}", saved.getId(), request.initialInventory());
+        }
+
+        return VariantResponse.fromEntity(saved);
+    }
+
+    // =========================================================================
+    // TICKET PV-02 — Cập nhật giá và thuộc tính biến thể
+    // =========================================================================
+
+    /**
+     * {@inheritDoc}
+     *
+     * 💡 Senior Note — Optimistic Lock vs Pessimistic Lock cho update giá:
+     * - UPDATE GIÁ (Optimistic): Xung đột rất hiếm (2 manager cùng đổi giá lúc 1 giây).
+     *   Không lock row DB → throughput cao. Khi conflict → báo lỗi 409 → user retry.
+     *   Chi phí conflict: user retry 1 lần. Chi phí lock nếu không conflict: 0.
+     *
+     * - UPDATE INVENTORY (Pessimistic): Xung đột thường xuyên (nhiều đơn hàng song song).
+     *   Phải lock row để tránh Lost Update (kho âm). Chi phí: hàng đợi ngắn.
+     *   Nếu không lock: Lost Update → kho âm → nghiêm trọng về nghiệp vụ.
+     *
+     * Quy tắc chọn lock: "Tần suất xung đột × Mức độ nghiêm trọng khi sai"
+     * → Giá: hiếm × không nghiêm trọng = Optimistic
+     * → Kho: thường × nghiêm trọng = Pessimistic
+     */
+    @Override
+    @Transactional
+    public VariantResponse updateVariant(Long variantId, UpdateVariantRequest request) {
+        log.info("Cập nhật biến thể id={}", variantId);
+
+        // ── BƯỚC 1: LOAD VARIANT (Optimistic Lock tự kích hoạt khi có @Version) ──
+        // findById() load entity bình thường, @Version field cũng được load.
+        // Khi transaction commit, Hibernate sẽ thực hiện:
+        //   UPDATE product_variants SET ..., version = oldVersion + 1
+        //   WHERE id = ? AND version = oldVersion
+        // Nếu version đã thay đổi bởi thread khác → 0 rows updated → OptimisticLockException.
+        ProductVariant variant = variantRepository.findById(variantId)
+                .orElseThrow(() -> new EntityNotFoundException(
+                        String.format("Không tìm thấy biến thể với ID: %d", variantId)
+                ));
+
+        // Snapshot trước khi sửa
+        String beforeJson = String.format("{\"salePrice\":\"%s\",\"importPrice\":\"%s\",\"status\":\"%s\"}",
+                variant.getSalePrice(), variant.getImportPrice(), variant.getStatus());
+
+        // ── BƯỚC 2: CẬP NHẬT CÁC TRƯỜNG KHÔNG NULL (patch semantics) ─────────
+        if (request.salePrice() != null) {
+            variant.setSalePrice(request.salePrice());
+        }
+        if (request.importPrice() != null) {
+            variant.setImportPrice(request.importPrice());
+        }
+        if (request.status() != null) {
+            variant.setStatus(request.status());
+        }
+
+        // ── BƯỚC 3: SAVE — @Version tự động increment và validate ─────────────
+        // OptimisticLockException được GlobalExceptionHandler bắt → HTTP 409.
+        ProductVariant saved = variantRepository.save(variant);
+        log.info("Đã cập nhật biến thể id={}", variantId);
+
+        // ── BƯỚC 4: GHI AUDIT LOG BẤT ĐỒNG BỘ ───────────────────────────────
+        String afterJson = String.format("{\"salePrice\":\"%s\",\"importPrice\":\"%s\",\"status\":\"%s\"}",
+                saved.getSalePrice(), saved.getImportPrice(), saved.getStatus());
+        String details = String.format("{\"before\":%s,\"after\":%s}", beforeJson, afterJson);
+        auditLogService.log(null, getCurrentUsername(), "UPDATE_VARIANT_PRICE", "PRODUCT_VARIANT", variantId, details);
+
+        return VariantResponse.fromEntity(saved);
+    }
+
+    // =========================================================================
+    // TICKET PV-02b — Điều chỉnh tồn kho thủ công (Stock Adjustment)
+    // =========================================================================
+
+    /**
+     * {@inheritDoc}
+     *
+     * 💡 Senior Note — Tại sao dùng Atomic SQL Update thay vì setter cho inventory?
+     *
+     * KỊCH BẢN RACE CONDITION nếu dùng setter:
+     *   T1: Owner A mở trang điều chỉnh kho → thấy inventory = 50 → nhập newQty = 45
+     *   T2: Owner B mở trang đồng thời → thấy inventory = 50 → nhập newQty = 40
+     *   T1 commit: variant.setInventory(45) → UPDATE ... SET inventory=45 WHERE id=? AND version=0
+     *   T2 commit: variant.setInventory(40) → UPDATE ... SET inventory=40 WHERE id=? AND version=0
+     *   → T2 thắng (last-write-wins) → inventory = 40, KHÔNG phải 45
+     *   → Stock adjustment của Owner A bị mất hoàn toàn (Lost Update)!
+     *
+     * VỚI PESSIMISTIC LOCK + ATOMIC SQL UPDATE:
+     *   T1: SELECT FOR UPDATE → acquire row lock
+     *   T2: SELECT FOR UPDATE → BLOCK và chờ (tối đa 3000ms)
+     *   T1: atomicUpdateInventory(id, 45) → Commit → Release lock
+     *   T2: Lock acquired → đọc inventory mới nhất = 45 → Update về 40
+     *   → Cả 2 adjustments đều được áp dụng đúng thứ tự.
+     *
+     * 💡 Senior Note — Tại sao chỉ OWNER mới được điều chỉnh kho thủ công?
+     * Stock adjustment là thao tác có thể che giấu gian lận kho (inventory manipulation).
+     * Manager có thể bị áp lực từ nhân viên để "fix" số liệu kho.
+     * Chỉ Owner (không bị cấp trên áp lực) mới có quyền này, và mọi thao tác đều được
+     * ghi AuditLog với reason bắt buộc → Owner chịu trách nhiệm pháp lý.
+     */
+    @Override
+    @Transactional
+    public void adjustStock(Long variantId, StockAdjustmentRequest request) {
+        log.info("Điều chỉnh tồn kho thủ công: variantId={}, newQty={}", variantId, request.newQuantity());
+
+        // ── BƯỚC 1: LOAD VỚI PESSIMISTIC LOCK ────────────────────────────────
+        // findByIdForUpdate(): SELECT ... FOR UPDATE → DB-level row lock.
+        // Thread khác gọi findByIdForUpdate() cùng ID sẽ BLOCK đến khi transaction này commit.
+        ProductVariant variant = variantRepository.findByIdForUpdate(variantId)
+                .orElseThrow(() -> new EntityNotFoundException(
+                        String.format("Không tìm thấy biến thể với ID: %d", variantId)
+                ));
+
+        // ── BƯỚC 2: TÍNH DELTA ────────────────────────────────────────────────
+        int oldQty = variant.getInventory();
+        int newQty = request.newQuantity();
+        int delta = newQty - oldQty;
+
+        // ── BƯỚC 3: GUARD — KHÔNG CÓ THAY ĐỔI ───────────────────────────────
+        if (delta == 0) {
+            throw new BusinessException(
+                    "Số lượng mới bằng số lượng hiện tại (" + oldQty + "), không có thay đổi."
+            );
+        }
+
+        // ── BƯỚC 4: ATOMIC SQL UPDATE ─────────────────────────────────────────
+        // KHÔNG dùng variant.setInventory(newQty) — xem Senior Note ở trên.
+        int updatedRows = variantRepository.atomicUpdateInventory(variantId, newQty);
+        if (updatedRows != 1) {
+            throw new BusinessException("Lỗi hệ thống: Không thể cập nhật tồn kho cho biến thể id=" + variantId);
+        }
+        log.info("Đã cập nhật inventory: variantId={}, {} → {}", variantId, oldQty, newQty);
+
+        // ── BƯỚC 5: GHI STOCKHISTORY ─────────────────────────────────────────
+        // referenceCode = "ADJ-" + timestamp: unique per adjustment, traceable.
+        String referenceCode = "ADJ-" + System.currentTimeMillis();
+        StockHistory history = StockHistory.builder()
+                .variantId(variantId)
+                .changeQuantity(delta)          // delta có thể âm (giảm kho)
+                .transactionType(TransactionType.ADJUSTMENT)
+                .referenceCode(referenceCode)
+                .balanceBefore(oldQty)
+                .balanceAfter(newQty)
+                .createdAt(LocalDateTime.now())
+                .build();
+        stockHistoryRepository.save(history);
+        log.info("Đã ghi StockHistory: ref={}, delta={}, before={}, after={}", referenceCode, delta, oldQty, newQty);
+
+        // ── BƯỚC 6: GHI AUDIT LOG BẤT ĐỒNG BỘ (@ASYNC) ──────────────────────
+        // Chạy trên thread riêng với Propagation.REQUIRES_NEW.
+        // Nếu ghi log lỗi → chỉ rollback transaction log, không ảnh hưởng stock adjustment.
+        String details = String.format(
+                "{\"variantId\":%d,\"oldQty\":%d,\"newQty\":%d,\"delta\":%d,\"reason\":\"%s\",\"referenceCode\":\"%s\"}",
+                variantId, oldQty, newQty, delta, request.reason(), referenceCode
+        );
+        auditLogService.log(null, getCurrentUsername(), "STOCK_ADJUSTMENT", "PRODUCT_VARIANT", variantId, details);
+    }
+
+    // =========================================================================
+    // TICKET PV-03 — Xóa mềm biến thể
+    // =========================================================================
+
+    /**
+     * {@inheritDoc}
+     *
+     * 💡 Senior Note — Tại sao phải rename SKU khi soft delete?
+     * Vấn đề: SKU có UNIQUE constraint. Sau khi soft delete (is_deleted=true),
+     * record vẫn còn trong DB nhưng bị ẩn bởi @SQLRestriction.
+     * Hệ quả: Không thể tạo biến thể mới với cùng SKU đó (UNIQUE vi phạm ở DB level),
+     * mặc dù về mặt nghiệp vụ, SKU này đã "không còn dùng nữa".
+     *
+     * VÍ DỤ:
+     * - Biến thể "ATN-D-L" bị xóa mềm → row vẫn có sku="ATN-D-L" trong DB.
+     * - Nhân viên muốn tạo lại biến thể "Áo Thun Nam - Đen - L" → SKU tự sinh = "ATN-D-L".
+     * - DB: INSERT INTO product_variants (sku, ...) VALUES ('ATN-D-L', ...) → DUPLICATE KEY ERROR!
+     *
+     * GIẢI PHÁP: @SQLDelete rename SKU = CONCAT(sku, '_deleted_', UNIX_TIMESTAMP())
+     * → Sku cũ: "ATN-D-L_deleted_1719849600"
+     * → UNIQUE constraint được giải phóng → SKU "ATN-D-L" có thể dùng lại.
+     * → UNIX_TIMESTAMP() đảm bảo suffix unique ngay cả khi cùng SKU bị xóa nhiều lần.
+     */
+    @Override
+    @Transactional
+    public void deleteVariant(Long variantId) {
+        log.info("Bắt đầu xóa mềm biến thể id={}", variantId);
+
+        // ── BƯỚC 1: LOAD VARIANT ──────────────────────────────────────────────
+        ProductVariant variant = variantRepository.findById(variantId)
+                .orElseThrow(() -> new EntityNotFoundException(
+                        String.format("Không tìm thấy biến thể với ID: %d", variantId)
+                ));
+
+        // ── BƯỚC 2: GUARD — KIỂM TRA INVENTORY = 0 ───────────────────────────
+        // Không xóa khi còn hàng: sẽ gây lỗi không xóa được tồn kho khỏi sổ sách.
+        // Yêu cầu nhân viên xuất hàng hoặc điều chỉnh về 0 trước.
+        if (variant.getInventory() != null && variant.getInventory() > 0) {
+            throw new BusinessException(
+                    String.format("Không thể xóa biến thể '%s' khi còn %d sản phẩm trong kho. " +
+                            "Vui lòng xuất kho hoặc điều chỉnh về 0 trước.",
+                            variant.getSku(), variant.getInventory())
+            );
+        }
+
+        // ── BƯỚC 3: GUARD — KIỂM TRA ĐANG TRONG DRAFT RECEIPT ───────────────
+        if (variantRepository.existsByIdInDraftImportReceipt(variantId)) {
+            throw new BusinessException(
+                    String.format("Biến thể '%s' đang được sử dụng trong phiếu nhập DRAFT. " +
+                            "Vui lòng hoàn thành hoặc hủy phiếu nhập trước khi xóa.",
+                            variant.getSku())
+            );
+        }
+
+        // ── BƯỚC 4: SOFT DELETE ───────────────────────────────────────────────
+        // variantRepository.delete() → Hibernate intercept → thực thi @SQLDelete:
+        // UPDATE product_variants
+        //   SET is_deleted = true,
+        //       sku = CONCAT(sku, '_deleted_', UNIX_TIMESTAMP())
+        // WHERE id = ?
+        // SKU cũ được giải phóng khỏi UNIQUE constraint → có thể tái sử dụng.
+        variantRepository.delete(variant);
+        log.info("Đã xóa mềm biến thể id={}, sku={} (SKU đã được rename)", variantId, variant.getSku());
+    }
+}

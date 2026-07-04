@@ -11,6 +11,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import com.example.store_clothes.idempotency.Idempotent;
+import com.example.store_clothes.idempotency.IdempotentScope;
+
 /**
  * OrderController - Controller xử lý các API liên quan đến hóa đơn bán hàng POS.
  *
@@ -41,6 +44,7 @@ public class OrderController {
      * @param request Dữ liệu giỏ hàng từ thu ngân
      * @return 201 Created + OrderResponse với mã hóa đơn và tiền thừa
      */
+    @Idempotent(ttlSeconds = 30, scope = IdempotentScope.POS)
     @PostMapping("/checkout")
     public ResponseEntity<ApiResponse<OrderResponse>> checkout(
             @Valid @RequestBody CheckoutRequest request) {

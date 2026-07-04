@@ -39,7 +39,7 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@SQLDelete(sql = "UPDATE product_variants SET is_deleted = true WHERE id = ?")
+@SQLDelete(sql = "UPDATE product_variants SET is_deleted = true, sku = CONCAT(sku, '_deleted_', UNIX_TIMESTAMP()) WHERE id = ?")
 @SQLRestriction("is_deleted = false")
 public class ProductVariant extends BaseEntity {
 
@@ -96,6 +96,25 @@ public class ProductVariant extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private ProductStatus status;
+
+    /**
+     * Optimistic Lock Version — Phát hiện xung đột ghi đồng thời.
+     *
+     * 💡 Senior Note — Tại sao dùng Optimistic Lock (không phải Pessimistic) cho update giá?
+     * - Optimistic: Không lock row ở DB. Chỉ kiểm tra version khi commit.
+     *   → Throughput cao, phù hợp với thao tác cập nhật giá (ít xung đột thực tế).
+     *   → Nếu 2 manager cùng update giá: người sau sẽ nhận HTTP 409 → load lại → retry.
+     *   → Không gây deadlock, không block thread.
+     * - Pessimistic: Lock row ngay khi đọc (SELECT FOR UPDATE).
+     *   → Phù hợp với inventory (xung đột thường xuyên, cần nhất quán tuyệt đối).
+     *   → Có thể gây deadlock nếu lock nhiều row theo thứ tự khác nhau.
+     *
+     * QUY TẮC: Giá thay đổi = Optimistic (low-conflict, high-throughput).
+     *          Inventory thay đổi = Pessimistic (high-conflict, must-be-exact).
+     */
+    @Version
+    @Column(name = "version", nullable = false)
+    private Long version;
 
     /**
      * Khóa ngoại liên kết về Product cha.

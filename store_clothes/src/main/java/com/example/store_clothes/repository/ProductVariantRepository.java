@@ -160,4 +160,65 @@ public interface ProductVariantRepository extends JpaRepository<ProductVariant, 
     @QueryHints(@QueryHint(name = "jakarta.persistence.lock.timeout", value = "3000"))
     @Query("SELECT pv FROM ProductVariant pv WHERE pv.id = :id")
     Optional<ProductVariant> findByIdForUpdate(@Param("id") Long id);
+
+    // =========================================================================
+    // STOCK ADJUSTMENT — Atomic Inventory Update (TICKET PV-02b)
+    // =========================================================================
+
+    /**
+     * Cập nhật tồn kho bằng Atomic SQL UPDATE, KHÔNG qua setter.
+     *
+     * 💡 Senior Note — Tại sao dùng @Modifying @Query thay vì setter?
+     *
+     * VẤN ĐỀ nếu dùng setter (variant.setInventory(newQty)):
+     *   1. Dirty check conflict với @Version (Optimistic Lock):
+     *      Hibernate sẽ bao gồm WHERE version = ? trong UPDATE statement.
+     *      Trong stock adjustment ta đã dùng Pessimistic Lock nên version check
+     *      là thừa, nhưng nếu version không khớp → OptimisticLockException sai lệch.
+     *   2. Race condition trong cùng transaction:
+     *      Pessimistic lock đã cấm thread khác đọc/ghi row này,
+     *      nhưng Hibernate flush dirty-checked entities theo thứ tự riêng.
+     *      Atomic SQL UPDATE bypass flush scheduling → guaranteed atomic.
+     *   3. Không triggering extra SELECT:
+     *      Setter yêu cầu entity phải loaded trước. @Modifying query
+     *      chạy trực tiếp trên DB không cần entity trong 1st-level cache.
+     *
+     * clearAutomatically = true: Xóa 1st-level cache (EntityManager) sau khi
+     * execute, buộc query sau đó load lại entity mới từ DB.
+     * Không có clearAutomatically, EntityManager có thể trả về entity cũ với
+     * inventory cũ → wrong balanceAfter trong StockHistory.
+     *
+     * @param id     ID của ProductVariant cần cập nhật
+     * @param newQty Số lượng tồn kho mới (>= 0, đã validate trước khi gọi)
+     * @return Số row bị ảnh hưởng (phải = 1)
+     */
+    @Modifying(clearAutomatically = true)
+    @Query("UPDATE ProductVariant pv SET pv.inventory = :newQty WHERE pv.id = :id")
+    int atomicUpdateInventory(@Param("id") Long id, @Param("newQty") Integer newQty);
+
+    // =========================================================================
+    // SOFT DELETE GUARD — DRAFT Receipt Check (TICKET PV-03)
+    // =========================================================================
+
+    /**
+     * Kiểm tra biến thể có đang nằm trong phiếu nhập DRAFT nào không.
+     *
+     * 💡 Senior Note — Tại sao phải check DRAFT trước khi xóa mềm variant?
+     * Nếu variant đang trong DRAFT receipt và bị xóa mềm:
+     *   - @SQLRestriction sẽ ẩn variant khỏi mọi query thông thường.
+     *   - Khi nhân viên kho completeReceipt(), hệ thống không tìm thấy variant
+     *     → NullPointerException hoặc EntityNotFoundException trong luồng hoàn phiếu.
+     *   - Dữ liệu inconsistent: receipt còn trỏ đến variant đã "biến mất".
+     *
+     * Chỉ chặn DRAFT (chưa hoàn thành), không chặn COMPLETED/CANCELLED.
+     * COMPLETED = đã nhập kho xong, variant ID trong receipt chỉ còn là tham chiếu lịch sử.
+     *
+     * @param variantId ID biến thể cần kiểm tra
+     * @return true nếu variant đang được dùng trong ít nhất 1 phiếu DRAFT
+     */
+    @Query("SELECT COUNT(d) > 0 FROM ImportReceiptDetail d " +
+           "JOIN d.receipt r " +
+           "WHERE d.variant.id = :variantId " +
+           "AND r.status = com.example.store_clothes.enums.ImportReceiptStatus.DRAFT")
+    boolean existsByIdInDraftImportReceipt(@Param("variantId") Long variantId);
 }

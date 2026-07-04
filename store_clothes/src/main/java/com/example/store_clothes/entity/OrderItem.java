@@ -48,7 +48,7 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class OrderItem extends BaseEntity {
+public class OrderItem extends BaseUuidEntity {
 
     /**
      * Liên kết về hóa đơn cha.

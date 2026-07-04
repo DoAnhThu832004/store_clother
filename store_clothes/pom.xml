@@ -29,7 +29,6 @@
 	<properties>
 		<java.version>21</java.version>
 		<springdoc.version>2.5.0</springdoc.version>
-		<ulid.version>1.3.0</ulid.version>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -108,17 +107,6 @@
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-redis</artifactId>
-		</dependency>
-
-		<!--
-		    ULID Generator: Sinh Universally Unique Lexicographically Sortable Identifier.
-		    Dùng cho POS Offline-First — Client tự sinh ID không trùng lặp.
-		    Lưu trữ dưới dạng BINARY(16) trong MySQL để tối ưu index.
-		-->
-		<dependency>
-			<groupId>de.huxhorn.sulky</groupId>
-			<artifactId>de.huxhorn.sulky.ulid</artifactId>
-			<version>${ulid.version}</version>
 		</dependency>
 
 		<!-- Spring AOP: Hỗ trợ @Aspect cho Idempotency và các cross-cutting concerns -->

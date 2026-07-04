@@ -64,6 +64,14 @@ public class Product extends BaseEntity {
     private ProductStatus status;
 
     /**
+     * Danh mục sản phẩm. Cho phép null (sản phẩm chưa phân loại).
+     * LAZY: Chỉ load Category khi thực sự cần - tránh N+1 query.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id")
+    private Category category;
+
+    /**
      * Danh sách biến thể của sản phẩm này.
      *
      * - mappedBy = "product": Chỉ định ProductVariant.product là bên sở hữu khóa ngoại.
