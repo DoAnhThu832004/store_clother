@@ -20,6 +20,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -82,7 +83,7 @@ public class AuthService {
      * @throws LockedException         Nếu tài khoản bị khóa
      * @throws DisabledException       Nếu tài khoản bị vô hiệu hóa
      */
-    @Transactional(readOnly = true)
+    @Transactional
     public AuthResponse login(LoginRequest request) {
 
         // ---------------------------------------------------------------
@@ -127,6 +128,19 @@ public class AuthService {
         // User entity đã được load EAGER với roles → sẵn sàng dùng ngay
         // ---------------------------------------------------------------
         User user = (User) auth.getPrincipal();
+
+        // ---------------------------------------------------------------
+        // Cập nhật lastLoginAt — set trước khi tạo token
+        //
+        // Dùng @Transactional (không readOnly) để save được lastLoginAt.
+        // userRepository.save() sẽ được flush khi transaction commit.
+        // Không cần gọi save() rời mới tạo token vì Hibernate dirty-check
+        // sẽ tự detect thay đổi và commit khi transaction kết thúc.
+        // ---------------------------------------------------------------
+        user.setLastLoginAt(LocalDateTime.now());
+        userRepository.save(user);
+
+        log.debug("lastLoginAt cập nhật cho user={}", user.getUsername());
 
         // ---------------------------------------------------------------
         // BƯỚC 3: Tạo JWT với extra claims

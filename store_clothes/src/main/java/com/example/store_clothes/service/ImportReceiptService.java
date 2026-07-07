@@ -1,19 +1,27 @@
 package com.example.store_clothes.service;
 
 import com.example.store_clothes.dto.request.CreateImportReceiptRequest;
+import com.example.store_clothes.dto.request.UpdateImportReceiptRequest;
 import com.example.store_clothes.dto.response.ImportReceiptResponse;
 import com.example.store_clothes.entity.*;
 import com.example.store_clothes.enums.ImportReceiptStatus;
 import com.example.store_clothes.enums.TransactionType;
 import com.example.store_clothes.exception.BusinessException;
+import com.example.store_clothes.exception.DomainException;
 import com.example.store_clothes.exception.EntityNotFoundException;
+import com.example.store_clothes.exception.ErrorCode;
 import com.example.store_clothes.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -330,6 +338,199 @@ public class ImportReceiptService {
     }
 
     // =========================================================================
+    // IR-01: DANH SÁCH PHIẾU NHẬP (Pagination + Filter)
+    // =========================================================================
+
+    /**
+     * Lấy danh sách phiếu nhập với bộ lọc đa điều kiện và phân trang.
+     *
+     * Chiến lược KHÔNG load details trong danh sách:
+     * - Details được load bằng LAZY. Danh sách chỉ trả metadata (receiptCode, status, totalAmount...).
+     * - Tránh N+1: Nếu load details trong list → mỗi phiếu = 1 query extra → với 20 phiếu/trang = 20 queries.
+     * - Chi tiết details chỉ được load khi gọi getReceiptById().
+     *
+     * 💡 Senior Note — Tại sao JOIN FETCH r.supplier nhưng KHÔNG JOIN FETCH r.details?
+     * supplier: Mỗi phiếu có 1 supplier → JOIN FETCH safe (không tạo Cartesian Product).
+     * details: Mỗi phiếu có N details → JOIN FETCH sẽ tạo Cartesian Product với Page → BUG.
+     * Rule: JOIN FETCH được phép cho @ManyToOne/@OneToOne, KHÔNG cho @OneToMany/@ManyToMany.
+     *
+     * @param page       Số trang (0-indexed)
+     * @param size       Số item mỗi trang (max 100)
+     * @param status     Filter theo trạng thái (null = tất cả)
+     * @param supplierId Filter theo NCC (null = tất cả)
+     * @param from       Filter từ ngày tạo dạng "yyyy-MM-dd" (null = không filter)
+     * @param to         Filter đến ngày tạo dạng "yyyy-MM-dd" (null = không filter)
+     * @return Page<ImportReceiptResponse> KHÔNG kèm details
+     */
+    @Transactional(readOnly = true)
+    public Page<ImportReceiptResponse> listReceipts(
+            int page, int size,
+            ImportReceiptStatus status,
+            Long supplierId,
+            String from, String to) {
+
+        log.debug("Listing receipts: page={}, size={}, status={}, supplierId={}, from={}, to={}",
+            page, size, status, supplierId, from, to);
+
+        // Parse ngày từ String sang LocalDateTime (nếu có)
+        LocalDateTime fromDate = from != null ? LocalDate.parse(from).atStartOfDay() : null;
+        LocalDateTime toDate = to != null ? LocalDate.parse(to).atTime(23, 59, 59) : null;
+
+        Pageable pageable = PageRequest.of(page, Math.min(size, 100),
+            Sort.by(Sort.Direction.DESC, "createdAt"));
+
+        Page<ImportReceipt> receipts = receiptRepository.findPagedWithFilters(
+            status, supplierId, fromDate, toDate, pageable);
+
+        // Map sang response — KHÔNG bao gồm details (null safe vì details là LAZY)
+        return receipts.map(receipt -> mapToListResponse(receipt));
+    }
+
+    // =========================================================================
+    // IR-02: SỬA PHIẾU NHẬP DRAFT
+    // =========================================================================
+
+    /**
+     * Sửa phiếu nhập đang ở trạng thái DRAFT.
+     *
+     * Chỉ cho phép sửa khi status = DRAFT. COMPLETED/CANCELLED → throw lỗi.
+     *
+     * CHIẾN LƯỢC XÓA VÀ TẠO LẠI DETAILS (quan trọng):
+     * Nếu items không null → XÓA TOÀN BỘ ImportReceiptDetail cũ (orphanRemoval=true)
+     * và tạo lại danh sách mới. KHÔNG diff từng item cũ/mới.
+     *
+     * 💡 Senior Note — Tại sao XÓA và TẠO LẠI thay vì DIFF từng item?
+     * (1) Đơn giản hóa logic: Diff từng item theo variantId phức tạp hơn nhiều:
+     *     - Item cũ không có trong list mới → DELETE.
+     *     - Item mới không có trong list cũ → INSERT.
+     *     - Item có ở cả 2 nhưng quantity/price khác → UPDATE.
+     *     Tổng cộng: 3 loại thao tác, nhiều edge case (variant trùng, thứ tự thay đổi...).
+     * (2) Kết quả giống nhau: Sau khi xóa và tạo lại, DB có đúng bộ details mà user muốn.
+     * (3) Idempotent: Client có thể gửi lại cùng request → cùng kết quả (tránh duplicate).
+     * (4) Ít bug hơn: Less code = less potential bugs trong edge cases.
+     * (5) Phù hợp với orphanRemoval=true đã cấu hình trên @OneToMany.
+     *
+     * Trade-off: Xóa và tạo lại tốn nhiều DB write hơn nếu chỉ thay đổi 1 item.
+     * Nhưng tại giai đoạn DRAFT (chưa commit kho), đây là trade-off chấp nhận được.
+     *
+     * @param receiptId ID phiếu nhập cần sửa
+     * @param request   Dữ liệu cập nhật (nullable fields = không thay đổi)
+     * @return ImportReceiptResponse sau khi cập nhật
+     */
+    @Transactional
+    public ImportReceiptResponse updateDraftReceipt(Long receiptId, UpdateImportReceiptRequest request) {
+        log.debug("Updating draft receipt: receiptId={}", receiptId);
+
+        // =====================================================================
+        // Bước 1: Load phiếu nhập KÈM DETAILS (JOIN FETCH tránh LazyInitException)
+        // =====================================================================
+        ImportReceipt receipt = receiptRepository.findByIdWithDetails(receiptId)
+            .orElseThrow(() -> new DomainException(ErrorCode.IMPORT_RECEIPT_NOT_FOUND,
+                java.util.Map.of("id", receiptId)));
+
+        // =====================================================================
+        // Bước 2: Validate trạng thái = DRAFT (Quy tắc nghiệp vụ bắt buộc)
+        // =====================================================================
+        if (receipt.getStatus() != ImportReceiptStatus.DRAFT) {
+            throw new DomainException(ErrorCode.IMPORT_RECEIPT_NOT_EDITABLE,
+                java.util.Map.of(
+                    "receiptId", receiptId,
+                    "currentStatus", receipt.getStatus().name()
+                ));
+        }
+
+        // =====================================================================
+        // Bước 3: Cập nhật NCC (nếu supplierId không null)
+        // =====================================================================
+        if (request.getSupplierId() != null) {
+            Supplier supplier = supplierRepository.findById(request.getSupplierId())
+                .orElseThrow(() -> new EntityNotFoundException(
+                    "Nhà cung cấp không tồn tại với ID: " + request.getSupplierId()));
+            receipt.setSupplier(supplier);
+            log.debug("Supplier updated to id={}", request.getSupplierId());
+        }
+
+        // =====================================================================
+        // Bước 4: Cập nhật items nếu được truyền (null = không đổi)
+        //
+        // CHIẾN LƯỢC XÓA VÀ TẠO LẠI:
+        // - receipt.getDetails().clear(): Vì orphanRemoval=true → Hibernate tự
+        //   DELETE các ImportReceiptDetail cũ khi flush (cuối transaction).
+        // - addAll(newDetails): Thêm danh sách details mới.
+        // Không cần gọi detailRepository.deleteAll() thủ công —
+        // orphanRemoval=true trên @OneToMany đủ để tự động xử lý.
+        // =====================================================================
+        BigDecimal totalAmount = receipt.getTotalAmount(); // Giữ nguyên nếu items null
+
+        if (request.getItems() != null) {
+            // Validate từng biến thể trong danh sách mới
+            List<ImportReceiptDetail> newDetails = new ArrayList<>();
+            BigDecimal newTotalAmount = BigDecimal.ZERO;
+
+            for (UpdateImportReceiptRequest.ImportDetailRequest item : request.getItems()) {
+                ProductVariant variant = variantRepository.findById(item.getVariantId())
+                    .orElseThrow(() -> new EntityNotFoundException(
+                        "Biến thể sản phẩm không tồn tại với ID: " + item.getVariantId()));
+
+                BigDecimal lineTotal = item.getImportPrice()
+                    .multiply(BigDecimal.valueOf(item.getQuantity()));
+                newTotalAmount = newTotalAmount.add(lineTotal);
+
+                ImportReceiptDetail detail = ImportReceiptDetail.builder()
+                    .receipt(receipt)
+                    .variant(variant)
+                    .quantity(item.getQuantity())
+                    .importPrice(item.getImportPrice())
+                    .build();
+                newDetails.add(detail);
+            }
+
+            // XÓA TOÀN BỘ DETAILS CŨ (orphanRemoval=true sẽ DELETE khi flush)
+            receipt.getDetails().clear();
+
+            // THÊM DETAILS MỚI
+            receipt.getDetails().addAll(newDetails);
+            totalAmount = newTotalAmount;
+            receipt.setTotalAmount(totalAmount);
+
+            log.debug("Details replaced: {} new items, totalAmount={}", newDetails.size(), totalAmount);
+        }
+
+        // =====================================================================
+        // Bước 5: Cập nhật paidAmount (nếu được truyền)
+        // =====================================================================
+        if (request.getPaidAmount() != null) {
+            // Validate paidAmount không vượt totalAmount
+            if (request.getPaidAmount().compareTo(totalAmount) > 0) {
+                throw new DomainException(ErrorCode.IMPORT_RECEIPT_PAID_EXCEEDS_TOTAL,
+                    java.util.Map.of(
+                        "paidAmount", request.getPaidAmount(),
+                        "totalAmount", totalAmount
+                    ));
+            }
+            receipt.setPaidAmount(request.getPaidAmount());
+        }
+
+        // =====================================================================
+        // Bước 6: Cập nhật note (nếu được truyền)
+        // =====================================================================
+        if (request.getNote() != null) {
+            receipt.setNote(request.getNote());
+        }
+
+        // =====================================================================
+        // Bước 7: Lưu phiếu (cascade ALL sẽ handle cả details)
+        // =====================================================================
+        receipt = receiptRepository.save(receipt);
+
+        log.info("Draft receipt updated: receiptCode={}, totalAmount={}, items={}",
+            receipt.getReceiptCode(), receipt.getTotalAmount(),
+            request.getItems() != null ? request.getItems().size() : "unchanged");
+
+        return mapToResponse(receipt);
+    }
+
+    // =========================================================================
     // TRUY VẤN
     // =========================================================================
 
@@ -450,5 +651,45 @@ public class ImportReceiptService {
                 .createdAt(receipt.getCreatedAt())
                 .updatedAt(receipt.getUpdatedAt())
                 .build();
+    }
+
+    /**
+     * Map ImportReceipt entity sang ImportReceiptResponse DTO cho DANH SÁCH (IR-01).
+     *
+     * Khác với mapToResponse(): KHÔNG bao gồm details để tránh N+1 query.
+     * Details là LAZY load — KHÔNG trigger load tại đây bằng cách bỏ qua receipt.getDetails().
+     *
+     * 💡 Senior Note — Tại sao không gọi receipt.getDetails() ở đây?
+     * Trong listReceipts(), @Transactional(readOnly=true) vẫn đang active.
+     * Nếu gọi receipt.getDetails() → Hibernate trigger SELECT per receipt → N+1 query!
+     * Với 20 phiếu/trang → 20 extra queries → latency tăng gấp 20 lần.
+     * Danh sách chỉ cần metadata (code, status, amount, supplier) → pass null cho details.
+     *
+     * @param receipt Entity phiếu nhập (supplier đã FETCH, details LAZY)
+     * @return Response DTO không kèm details
+     */
+    private ImportReceiptResponse mapToListResponse(ImportReceipt receipt) {
+        Supplier supplier = receipt.getSupplier();
+        ImportReceiptResponse.SupplierSummary supplierSummary = ImportReceiptResponse.SupplierSummary.builder()
+            .id(supplier.getId())
+            .name(supplier.getName())
+            .phone(supplier.getPhone())
+            .build();
+
+        BigDecimal debtAmount = receipt.getTotalAmount().subtract(receipt.getPaidAmount());
+
+        return ImportReceiptResponse.builder()
+            .id(receipt.getId())
+            .receiptCode(receipt.getReceiptCode())
+            .status(receipt.getStatus())
+            .supplier(supplierSummary)
+            .totalAmount(receipt.getTotalAmount())
+            .paidAmount(receipt.getPaidAmount())
+            .debtAmount(debtAmount)
+            .note(receipt.getNote())
+            .details(null)                          // KHÔNG load details trong list
+            .createdAt(receipt.getCreatedAt())
+            .updatedAt(receipt.getUpdatedAt())
+            .build();
     }
 }

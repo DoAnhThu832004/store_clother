@@ -9,6 +9,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
@@ -40,7 +41,14 @@ import java.util.stream.Collectors;
         @Index(name = "idx_user_email", columnList = "email")
     }
 )
-@SQLDelete(sql = "UPDATE users SET is_deleted = true WHERE id = ?")
+@SQLDelete(sql = """
+    UPDATE users
+    SET is_deleted = true,
+        status = 'LOCKED',
+        username = CONCAT(username, '_deleted_', UNIX_TIMESTAMP()),
+        email = CONCAT(IFNULL(email,''), '_deleted_', UNIX_TIMESTAMP())
+    WHERE id = ?
+    """)
 @SQLRestriction("is_deleted = false")
 @Getter
 @Setter
@@ -94,6 +102,19 @@ public class User extends BaseEntity implements UserDetails {
     )
     @Builder.Default
     private Set<Role> roles = new HashSet<>();
+
+    /**
+     * Thời điểm đăng nhập gần nhất.
+     * Được cập nhật trong AuthService.login() sau khi xác thực thành công.
+     * Nullable: null nếu user chưa bao giờ đăng nhập (tài khoản mới tạo chưa login).
+     *
+     * 💡 Senior Note — Không dùng @LastModifiedDate ở đây:
+     * @LastModifiedDate cập nhật mỗi lần entity bị sửa (kể cả đổi role, reset password).
+     * lastLoginAt chỉ nên được set khi user đăng nhập thành công,
+     * không cập nhật khi admin sửa thông tin user.
+     */
+    @Column(name = "last_login_at")
+    private LocalDateTime lastLoginAt;
 
     // =========================================================================
     // UserDetails Implementation — Spring Security Contract

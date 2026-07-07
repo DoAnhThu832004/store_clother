@@ -2,10 +2,13 @@ package com.example.store_clothes.repository;
 
 import com.example.store_clothes.entity.ImportReceipt;
 import com.example.store_clothes.enums.ImportReceiptStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -73,4 +76,46 @@ public interface ImportReceiptRepository extends JpaRepository<ImportReceipt, Lo
      * Ví dụ: Lấy tất cả DRAFT để nhắc nhân viên hoàn thành phiếu còn dang dở.
      */
     List<ImportReceipt> findByStatusOrderByCreatedAtDesc(ImportReceiptStatus status);
+
+    // =========================================================================
+    // IR-01: Danh sách phiếu nhập với bộ lọc đa điều kiện + phân trang
+    // =========================================================================
+
+    /**
+     * Tìm kiếm phiếu nhập với nhiều bộ lọc kết hợp.
+     *
+     * THIẾT KẾ QUERY:
+     * - KHÔNG JOIN FETCH details để tránh N+1 (danh sách chỉ cần metadata).
+     * - KHÔNG JOIN FETCH supplier.* — chỉ cần supplier.name và supplier.id (done qua r.supplier).
+     * - Tất cả params đều nullable: null = không filter theo điều kiện đó.
+     * - Pageable: Spring Data tự inject ORDER BY và LIMIT/OFFSET.
+     *
+     * 💡 Senior Note — Tại sao dùng JPQL thay vì Specification (Criteria API)?
+     * Specification linh hoạt hơn nhưng verbose hơn và harder to read.
+     * Với số lượng filter cố định (4 điều kiện), JPQL with IS NULL check đủ tốt
+     * và dễ đọc/maintain hơn. Nếu filter tăng lên >8 → migrate sang Specification.
+     *
+     * @param status     Filter theo trạng thái (null = không filter)
+     * @param supplierId Filter theo nhà cung cấp (null = không filter)
+     * @param from       Filter từ ngày tạo (null = không filter)
+     * @param to         Filter đến ngày tạo (null = không filter)
+     * @param pageable   Phân trang (page, size, sort)
+     * @return Page<ImportReceipt> chỉ chứa metadata, KHÔNG load details
+     */
+    @Query("""
+        SELECT r FROM ImportReceipt r
+        JOIN FETCH r.supplier s
+        WHERE (:status IS NULL OR r.status = :status)
+          AND (:supplierId IS NULL OR s.id = :supplierId)
+          AND (:from IS NULL OR r.createdAt >= :from)
+          AND (:to IS NULL OR r.createdAt <= :to)
+        """)
+    Page<ImportReceipt> findPagedWithFilters(
+        @Param("status") ImportReceiptStatus status,
+        @Param("supplierId") Long supplierId,
+        @Param("from") LocalDateTime from,
+        @Param("to") LocalDateTime to,
+        Pageable pageable
+    );
 }
+

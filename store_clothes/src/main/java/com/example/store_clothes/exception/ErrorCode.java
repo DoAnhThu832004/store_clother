@@ -80,8 +80,14 @@ public enum ErrorCode {
     /** Không tìm thấy khách hàng */
     CUSTOMER_NOT_FOUND(HttpStatus.NOT_FOUND, "Không tìm thấy khách hàng"),
 
-    /** Số điện thoại khách hàng đã tồn tại */
+    /** Số điện thoại khách hàng đã tồn tại (ở KH đang active) */
     CUSTOMER_PHONE_DUPLICATED(HttpStatus.CONFLICT, "Số điện thoại đã được đăng ký bởi khách hàng khác"),
+
+    /** Số điện thoại tồn tại ở KH đã bị xóa mềm — cần xác nhận restore từ người dùng */
+    CUSTOMER_PHONE_BELONGS_TO_DELETED(HttpStatus.CONFLICT, "Số điện thoại đã từng được đăng ký bởi một khách hàng đã bị xóa. Vui lòng liên hệ quản lý để khôi phục."),
+
+    /** Không thể xóa khách hàng đang có đơn hàng PENDING chưa hoàn thành */
+    CUSTOMER_HAS_PENDING_ORDERS(HttpStatus.CONFLICT, "Không thể xóa khách hàng đang có đơn hàng chưa hoàn thành"),
 
     // =========================================================================
     // MODULE: PHIẾU NHẬP KHO
@@ -92,6 +98,9 @@ public enum ErrorCode {
 
     /** Phiếu nhập đã hoàn thành, không thể chỉnh sửa nữa */
     IMPORT_RECEIPT_NOT_EDITABLE(HttpStatus.CONFLICT, "Chỉ có thể chỉnh sửa phiếu nhập đang ở trạng thái DRAFT"),
+
+    /** Số tiền thanh toán vượt quá tổng giá trị phiếu */
+    IMPORT_RECEIPT_PAID_EXCEEDS_TOTAL(HttpStatus.BAD_REQUEST, "Số tiền thanh toán không được vượt quá tổng giá trị phiếu nhập"),
 
     // =========================================================================
     // MODULE: HÓA ĐƠN / ĐƠN HÀNG

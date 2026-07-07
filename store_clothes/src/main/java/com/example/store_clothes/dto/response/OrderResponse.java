@@ -1,5 +1,6 @@
 package com.example.store_clothes.dto.response;
 
+import com.example.store_clothes.enums.OrderStatus;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -8,7 +9,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 /**
- * OrderResponse - DTO trả về cho Client sau khi thanh toán thành công.
+ * OrderResponse - DTO trả về cho Client sau khi thanh toán thành công hoặc query danh sách.
  *
  * Tất cả dữ liệu giá là snapshot — không query lại từ bảng Product.
  */
@@ -22,6 +23,13 @@ public class OrderResponse {
     private BigDecimal paidAmount;
     private BigDecimal changeAmount;
     private String note;
+
+    /**
+     * Trạng thái hóa đơn: COMPLETED / REFUNDED / PENDING.
+     * Thêm mới để hỗ trợ ORD-01 (hủy đơn) và ORD-02 (filter theo status).
+     */
+    private OrderStatus status;
+
     private LocalDateTime createdAt;
     private List<OrderItemSummary> items;
 

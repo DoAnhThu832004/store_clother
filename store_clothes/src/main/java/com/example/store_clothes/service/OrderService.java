@@ -3,15 +3,20 @@ package com.example.store_clothes.service;
 import com.example.store_clothes.dto.request.CheckoutRequest;
 import com.example.store_clothes.dto.response.OrderResponse;
 import com.example.store_clothes.entity.*;
+import com.example.store_clothes.enums.OrderStatus;
 import com.example.store_clothes.enums.TransactionType;
 import com.example.store_clothes.exception.BusinessException;
 import com.example.store_clothes.exception.EntityNotFoundException;
 import com.example.store_clothes.exception.InsufficientStockException;
+import com.example.store_clothes.repository.CustomerRepository;
 import com.example.store_clothes.repository.OrderRepository;
 import com.example.store_clothes.repository.ProductVariantRepository;
 import com.example.store_clothes.repository.StockHistoryRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * OrderService - Tầng nghiệp vụ cho luồng thanh toán hóa đơn POS.
@@ -37,7 +43,7 @@ import java.util.Optional;
  *     Giải pháp: Ép tất cả thread phải LUÔN LUÔN acquire lock theo
  *     thứ tự variantId ASC. Thread B không thể giữ lock id=2 trước
  *     khi acquire id=1 → Circular Wait bị phá vỡ hoàn toàn.
- *     Code: request.getItems().sort(Comparator.comparing(...variantId))
+ *     Code: sortedItems.sort(Comparator.comparing(...variantId))
  *
  * [2] CHỐNG ÂM KHO (Over-selling) — Pessimistic Write Lock:
  *     Vấn đề: Thread A đọc inventory=1, Thread B đọc inventory=1.
@@ -66,6 +72,8 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final ProductVariantRepository variantRepository;
     private final StockHistoryRepository stockHistoryRepository;
+    private final CustomerRepository customerRepository;
+    private final AuditLogService auditLogService;
 
     // Format mã hóa đơn: HD-YYYYMMDD-XXXX
     private static final String ORDER_CODE_PREFIX = "HD-";
@@ -248,6 +256,7 @@ public class OrderService {
                 .paidAmount(request.getPaidAmount())
                 .changeAmount(changeAmount)
                 .note(request.getNote())
+                .status(OrderStatus.COMPLETED)
                 .build();
 
         // Liên kết bidirectional trước khi save
@@ -263,6 +272,204 @@ public class OrderService {
                 orderCode, totalAmount, sortedItems.size());
 
         return mapToResponse(savedOrder);
+    }
+
+    // =========================================================================
+    // ORD-01 — HỦY HÓA ĐƠN + HOÀN KHO
+    // =========================================================================
+
+    /**
+     * Hủy hóa đơn và hoàn toàn bộ tồn kho.
+     *
+     * ====================================================================
+     * LUỒNG THỰC THI (7 BƯỚC) — PHẢI THỰC HIỆN ĐÚNG THỨ TỰ:
+     * ====================================================================
+     *
+     * 1. Load Order, kiểm tra status = COMPLETED.
+     * 2. Load danh sách OrderItem.
+     * 3. SORT orderItems theo variantId ASC — CHỐNG DEADLOCK.
+     * 4. Với mỗi OrderItem:
+     *    a. SELECT FOR UPDATE variant (Pessimistic Lock timeout 3000ms)
+     *    b. Hoàn kho: inventory += quantity
+     *    c. Ghi StockHistory: TransactionType.RETURN, referenceCode="CANCEL-" + orderCode
+     * 5. Đổi order.status = REFUNDED.
+     * 6. Trừ loyaltyPoints khách hàng (nếu có).
+     * 7. Ghi AuditLog @Async.
+     *
+     * 💡 Senior Note — Tại sao sort variantId trong cancelOrder giống checkout?
+     * -----------------------------------------------------------------------
+     * Deadlock có thể xảy ra khi 2 request hủy đơn ĐỒNG THỜI:
+     *   Request X hủy đơn {variantId=3, variantId=5} → lock 3, chờ 5
+     *   Request Y hủy đơn {variantId=5, variantId=3} → lock 5, chờ 3
+     *   → Circular Wait → Deadlock
+     * Nguy hiểm hơn: Request hủy đơn và request checkout cùng lúc:
+     *   Checkout A lock variantId=2, chờ variantId=7
+     *   Cancel B lock variantId=7, chờ variantId=2
+     *   → Deadlock giữa checkout và cancel!
+     * Giải pháp: Sort ASC trên MỌI luồng acquire DB lock → phá Circular Wait.
+     *
+     * 💡 Senior Note — Tại sao dùng TransactionType.RETURN thay vì IMPORT?
+     * -----------------------------------------------------------------------
+     * IMPORT = Nhập hàng từ nhà cung cấp (có phiếu nhập, có invoice).
+     * RETURN  = Khách trả hàng (có lý do hủy đơn, không phải mua hàng mới).
+     * Phân biệt 2 loại giúp báo cáo tồn kho phân biệt được:
+     *   - Hàng nhập mới (IMPORT) vs Hàng hoàn trả (RETURN).
+     *   - Tỷ lệ RETURN cao → cảnh báo chất lượng sản phẩm/dịch vụ.
+     * Nếu dùng IMPORT → báo cáo "Tổng nhập kho" sẽ bao gồm cả hàng hoàn trả,
+     * sai lệch báo cáo công nợ nhà cung cấp và báo cáo mua hàng.
+     *
+     * @param orderId   ID hóa đơn cần hủy
+     * @param cancelledByUserId  ID người dùng đang thực hiện hủy (từ SecurityContext)
+     * @param cancelledByUsername Username người dùng đang thực hiện hủy
+     */
+    @Transactional
+    public void cancelOrder(UUID orderId, Long cancelledByUserId, String cancelledByUsername) {
+        log.info("=== BẮT ĐẦU HỦY ĐƠN: orderId={}, by={} ===", orderId, cancelledByUsername);
+
+        // =====================================================================
+        // BƯỚC 1: LOAD ORDER + KIỂM TRA STATUS
+        // =====================================================================
+        Order order = orderRepository.findByIdWithItems(orderId)
+                .orElseThrow(() -> new EntityNotFoundException("Hóa đơn không tồn tại: " + orderId));
+
+        if (order.getStatus() == OrderStatus.REFUNDED) {
+            throw new BusinessException("Hóa đơn " + order.getOrderCode() + " đã được hủy trước đó.");
+        }
+
+        if (order.getStatus() != OrderStatus.COMPLETED) {
+            throw new BusinessException("Chỉ có thể hủy hóa đơn ở trạng thái COMPLETED. " +
+                    "Trạng thái hiện tại: " + order.getStatus());
+        }
+
+        // =====================================================================
+        // BƯỚC 2+3: SORT ORDER ITEMS THEO variantId ASC — CHỐNG DEADLOCK
+        //
+        // CRITICAL: Phải sort TRƯỚC KHI acquire bất kỳ lock nào.
+        // Xem giải thích chi tiết tại Javadoc của method này.
+        // =====================================================================
+        List<OrderItem> sortedItems = order.getItems().stream()
+                .sorted(Comparator.comparing(OrderItem::getVariantId))
+                .toList();
+
+        log.debug("Sort {} items theo variantId ASC cho cancelOrder {}: {}",
+                sortedItems.size(), order.getOrderCode(),
+                sortedItems.stream().map(i -> "variantId=" + i.getVariantId()).toList());
+
+        List<StockHistory> historiesToSave = new ArrayList<>();
+
+        // =====================================================================
+        // BƯỚC 4: VÒNG LẶP HOÀN KHO (THEO THỨ TỰ ĐÃ SORT)
+        // =====================================================================
+        for (OrderItem item : sortedItems) {
+
+            // ------------------------------------------------------------------
+            // BƯỚC 4a: SELECT FOR UPDATE — Pessimistic Lock (timeout 3000ms)
+            // ------------------------------------------------------------------
+            ProductVariant variant = variantRepository.findByIdForUpdate(item.getVariantId())
+                    .orElseThrow(() -> new EntityNotFoundException(
+                            "Biến thể sản phẩm không tồn tại: variantId=" + item.getVariantId()));
+
+            int balanceBefore = variant.getInventory();
+
+            // ------------------------------------------------------------------
+            // BƯỚC 4b: HOÀN KHO — inventory += quantity
+            //
+            // 💡 Senior Note — Tại sao không check âm kho ở đây?
+            // Đây là HOÀN kho (cộng), không bao giờ âm.
+            // Đơn hàng bị hủy → hàng quay về kho → không thể nhỏ hơn 0.
+            // CHECK (inventory >= 0) ở DB vẫn còn nhưng sẽ không bao giờ bị vi phạm.
+            // ------------------------------------------------------------------
+            int balanceAfter = balanceBefore + item.getQuantity();
+            variant.setInventory(balanceAfter);
+            variantRepository.save(variant);
+
+            log.debug("Hoàn kho variantId={}: {} → {} (hoàn +{})",
+                    variant.getId(), balanceBefore, balanceAfter, item.getQuantity());
+
+            // ------------------------------------------------------------------
+            // BƯỚC 4c: GHI THẺ KHO (bất biến)
+            // changeQuantity = dương vì HOÀN KHO (cộng lại)
+            // transactionType = RETURN: phân biệt rõ với IMPORT từ NCC
+            // referenceCode = "CANCEL-" + orderCode: tra cứu nguồn gốc
+            // ------------------------------------------------------------------
+            StockHistory history = StockHistory.builder()
+                    .variantId(variant.getId())
+                    .changeQuantity(item.getQuantity())          // Dương = hoàn kho
+                    .transactionType(TransactionType.RETURN)
+                    .referenceCode("CANCEL-" + order.getOrderCode())
+                    .balanceBefore(balanceBefore)
+                    .balanceAfter(balanceAfter)
+                    .createdAt(LocalDateTime.now())
+                    .build();
+            historiesToSave.add(history);
+        }
+
+        // =====================================================================
+        // BƯỚC 5: ĐỔI STATUS → REFUNDED
+        // =====================================================================
+        order.setStatus(OrderStatus.REFUNDED);
+        orderRepository.save(order);
+
+        // =====================================================================
+        // BƯỚC 6: TRỪLẠI LOYALTY POINTS (nếu khách hàng không phải vãng lai)
+        // =====================================================================
+        if (order.getCustomerId() != null) {
+            customerRepository.findById(order.getCustomerId()).ifPresent(customer -> {
+                // Tính điểm đã tích lũy từ đơn này: finalAmount / 10000, round down
+                long pointsEarned = order.getTotalAmount()
+                        .divide(BigDecimal.valueOf(10000), 0, java.math.RoundingMode.DOWN)
+                        .longValue();
+
+                // Đảm bảo loyaltyPoints không âm
+                int newPoints = Math.max(0, customer.getLoyaltyPoints() - (int) pointsEarned);
+                customer.setLoyaltyPoints(newPoints);
+                customerRepository.save(customer);
+
+                log.debug("Trừ loyaltyPoints khách {}: -{} → {} điểm",
+                        customer.getId(), pointsEarned, newPoints);
+            });
+        }
+
+        // Batch INSERT tất cả thẻ kho một lần
+        stockHistoryRepository.saveAll(historiesToSave);
+
+        log.info("=== HỦY ĐƠN THÀNH CÔNG: orderCode={}, by={} ===",
+                order.getOrderCode(), cancelledByUsername);
+
+        // =====================================================================
+        // BƯỚC 7: GHI AUDIT LOG @Async (Propagation.REQUIRES_NEW)
+        // Không blocking — response trả ngay, log ghi trên thread riêng.
+        // =====================================================================
+        String details = String.format(
+                "{\"orderId\": \"%s\", \"orderCode\": \"%s\", \"totalRefunded\": %s}",
+                orderId, order.getOrderCode(), order.getTotalAmount()
+        );
+        auditLogService.log(cancelledByUserId, cancelledByUsername,
+                "CANCEL_ORDER", "ORDER", null, details);
+    }
+
+    // =========================================================================
+    // ORD-02 — DANH SÁCH HÓA ĐƠN VỚI FILTER STATUS
+    // =========================================================================
+
+    /**
+     * Lấy danh sách hóa đơn với filter đa điều kiện + phân trang.
+     *
+     * @param status     Filter theo OrderStatus (null = tất cả)
+     * @param customerId Filter theo khách hàng (null = tất cả)
+     * @param from       Từ ngày (null = không filter)
+     * @param to         Đến ngày (null = không filter)
+     * @param pageable   Phân trang
+     * @return Page<OrderResponse>
+     */
+    @Transactional(readOnly = true)
+    public Page<OrderResponse> getOrders(OrderStatus status,
+                                          Long customerId,
+                                          LocalDateTime from,
+                                          LocalDateTime to,
+                                          Pageable pageable) {
+        return orderRepository.findOrders(status, customerId, from, to, pageable)
+                .map(this::mapToResponse);
     }
 
     // =========================================================================
@@ -340,6 +547,7 @@ public class OrderService {
                 .paidAmount(order.getPaidAmount())
                 .changeAmount(order.getChangeAmount())
                 .note(order.getNote())
+                .status(order.getStatus())
                 .createdAt(order.getCreatedAt())
                 .items(itemSummaries)
                 .build();

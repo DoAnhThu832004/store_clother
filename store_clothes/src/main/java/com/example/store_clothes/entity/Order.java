@@ -1,5 +1,6 @@
 package com.example.store_clothes.entity;
 
+import com.example.store_clothes.enums.OrderStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.SQLDelete;
@@ -60,6 +61,31 @@ public class Order extends BaseUuidEntity {
      */
     @Column(name = "change_amount", nullable = false, precision = 14, scale = 2)
     private BigDecimal changeAmount;
+
+    /**
+     * ID khách hàng (nullable — null = khách vãng lai không cần đăng ký).
+     *
+     * 💡 Senior Note — Tại sao lưu customerId dạng Long thay vì @ManyToOne Customer?
+     * (1) Khách vãng lai: Không phải lần nào cũng có KH đăng ký → nullable FK đơn giản.
+     * (2) Soft delete an toàn: Nếu Customer bị xóa mềm, Order vẫn giữ nguyên lịch sử.
+     *     @ManyToOne LAZY load sẽ ném LazyInitializationException nếu KH bị xóa mềm
+     *     và @SQLRestriction filter ra. Long ID luôn tồn tại trong row.
+     * (3) Hiệu năng: Không JOIN sang bảng customers khi chỉ cần xử lý đơn hàng.
+     */
+    @Column(name = "customer_id", nullable = true)
+    private Long customerId;
+
+    /**
+     * Trạng thái hóa đơn.
+     * Mặc định = COMPLETED ngay sau khi checkout (POS thanh toán ngay lập tức).
+     * Chuyển sang REFUNDED khi OWNER/MANAGER hủy đơn và hoàn kho.
+     *
+     * @Builder.Default: Bắt buộc để Lombok Builder khởi tạo đúng giá trị mặc định.
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false, length = 20)
+    @Builder.Default
+    private OrderStatus status = OrderStatus.COMPLETED;
 
     /**
      * Ghi chú tự do của thu ngân (ví dụ: "Khách mua cho con").
