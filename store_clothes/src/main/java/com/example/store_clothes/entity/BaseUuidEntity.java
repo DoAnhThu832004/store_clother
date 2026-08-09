@@ -5,6 +5,7 @@ import com.example.store_clothes.util.UlidGenerator;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.TenantId;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -20,6 +21,11 @@ import java.util.UUID;
  *  - ID kiểu DB: BINARY(16) trong MySQL (tiết kiệm không gian lưu trữ và tối ưu index).
  *  - Converter: UlidAttributeConverter thực hiện chuyển đổi tự động UUID ↔ BINARY(16).
  *  - Sinh ID: @PrePersist gọi UlidGenerator để tự sinh UUID dựa trên timestamp ULID (time-sortable, offline-first).
+ *
+ * MULTI-TENANCY:
+ *  - @TenantId: Hibernate 6 tự động inject tenant_id vào mọi INSERT/SELECT/UPDATE.
+ *  - Order và OrderItem kế thừa class này → tự động có tenant isolation.
+ *  - updatable = false: Một record không thể "chuyển chủ" sang tenant khác.
  */
 @Getter
 @Setter
@@ -31,6 +37,14 @@ public abstract class BaseUuidEntity {
     @Column(name = "id", columnDefinition = "BINARY(16)", nullable = false, updatable = false)
     @Convert(converter = UlidAttributeConverter.class)
     private UUID id;
+
+    /**
+     * Định danh Tenant (Cửa hàng) sở hữu bản ghi này.
+     * Hibernate 6 @TenantId tự động inject vào mọi câu SQL — không cần WHERE thủ công.
+     */
+    @TenantId
+    @Column(name = "tenant_id", nullable = false, updatable = false)
+    private Long tenantId;
 
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)

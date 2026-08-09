@@ -28,20 +28,29 @@ import java.util.List;
  * - không bao giờ được xóa khỏi DB (kể cả xóa mềm).
  */
 @Entity
-@Table(name = "import_receipts")
+@Table(
+    name = "import_receipts",
+    uniqueConstraints = {
+        // Mã phiếu nhập duy nhất trong phạm vi cửa hàng (tenant).
+        @UniqueConstraint(name = "uq_import_receipt_tenant_code", columnNames = {"tenant_id", "receipt_code"})
+    },
+    indexes = {
+        @Index(name = "idx_import_receipt_code",   columnList = "receipt_code"),
+        @Index(name = "idx_import_receipt_tenant", columnList = "tenant_id")
+    }
+)
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ImportReceipt extends BaseEntity {
+public class ImportReceipt extends TenantAwareBaseEntity {
 
     /**
-     * Mã phiếu nhập hàng - duy nhất trên toàn hệ thống.
-     * Format: PN-YYYYMMDD-XXXX. Ví dụ: "PN-20260626-0001".
-     * Được sinh tự động bởi ImportReceiptService khi tạo phiếu nháp.
+     * Mã phiếu nhập hàng - duy nhất trong phạm vi cửa hàng (tenant).
+     * unique=false vì đã dùng composite unique (tenant_id, receipt_code) phạm vi table.
      */
-    @Column(name = "receipt_code", nullable = false, unique = true, length = 30)
+    @Column(name = "receipt_code", nullable = false, length = 30)
     private String receiptCode;
 
     /**

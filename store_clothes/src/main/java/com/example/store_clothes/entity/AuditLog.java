@@ -27,11 +27,13 @@ import java.time.LocalDateTime;
     name = "audit_logs",
     indexes = {
         // Tra cứu lịch sử hành động theo nhân viên
-        @Index(name = "idx_audit_user", columnList = "user_id"),
+        @Index(name = "idx_audit_user",     columnList = "user_id"),
         // Lọc log theo khoảng thời gian
-        @Index(name = "idx_audit_created", columnList = "created_at"),
+        @Index(name = "idx_audit_created",  columnList = "created_at"),
         // Truy vết lịch sử biến động của một đối tượng cụ thể
-        @Index(name = "idx_audit_resource", columnList = "resource_type, resource_id")
+        @Index(name = "idx_audit_resource", columnList = "resource_type, resource_id"),
+        // Lọc log theo tenant (Super Admin xem log của cửa hàng nào)
+        @Index(name = "idx_audit_tenant",   columnList = "tenant_id")
     }
 )
 @EntityListeners(AuditingEntityListener.class)
@@ -44,6 +46,17 @@ public class AuditLog {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    /**
+     * Định danh Cửa hàng liên quan đến sự kiện này.
+     *
+     * THIẾT KẾC ĐẶC BIỆT:
+     * AuditLog không kế thừa TenantAwareBaseEntity (immutable, không có updatedAt, isDeleted).
+     * tenantId được lưu rõ để Super Admin có thể filter log theo cửa hàng.
+     * null = sự kiện của hệ thống (startup, migration, scheduled job).
+     */
+    @Column(name = "tenant_id", updatable = false)
+    private Long tenantId;
 
     /**
      * ID người dùng thực hiện hành động.

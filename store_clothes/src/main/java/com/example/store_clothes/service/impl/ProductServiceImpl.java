@@ -648,6 +648,7 @@ public class ProductServiceImpl implements ProductService {
         // 💡 Mọi thay đổi tồn kho — kể cả khởi tạo — đều phải có StockHistory.
         if (request.initialInventory() > 0) {
             StockHistory initHistory = StockHistory.builder()
+                    .tenantId(com.example.store_clothes.multitenancy.TenantContextHolder.getTenantId())
                     .variantId(saved.getId())
                     .changeQuantity(request.initialInventory())  // delta = initialInventory - 0
                     .transactionType(TransactionType.ADJUSTMENT)
@@ -795,6 +796,7 @@ public class ProductServiceImpl implements ProductService {
         // referenceCode = "ADJ-" + timestamp: unique per adjustment, traceable.
         String referenceCode = "ADJ-" + System.currentTimeMillis();
         StockHistory history = StockHistory.builder()
+                .tenantId(com.example.store_clothes.multitenancy.TenantContextHolder.getTenantId())
                 .variantId(variantId)
                 .changeQuantity(delta)          // delta có thể âm (giảm kho)
                 .transactionType(TransactionType.ADJUSTMENT)

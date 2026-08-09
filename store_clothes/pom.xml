@@ -114,6 +114,17 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-aop</artifactId>
 		</dependency>
+
+		<!--
+		    Flyway: Quản lý Database Migration có version.
+		    flyway-mysql: Extension hỗ trợ MySQL-specific syntax (UNIX_TIMESTAMP, etc.)
+		    BẮT BUỘC khi dùng Flyway với MySQL — spring-boot auto-configure Flyway
+		    khi detect dependency này trên classpath.
+		-->
+		<dependency>
+			<groupId>org.flywaydb</groupId>
+			<artifactId>flyway-mysql</artifactId>
+		</dependency>
 	</dependencies>
 
 	<build>

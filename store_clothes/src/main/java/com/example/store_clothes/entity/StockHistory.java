@@ -34,9 +34,11 @@ import java.time.LocalDateTime;
 @Table(name = "stock_history",
         indexes = {
                 // Index để truy vấn lịch sử theo biến thể - dùng thường xuyên trong báo cáo
-                @Index(name = "idx_stock_history_variant_id", columnList = "variant_id"),
+                @Index(name = "idx_stock_history_variant_id",     columnList = "variant_id"),
                 // Index để truy vấn theo mã phiếu tham chiếu
-                @Index(name = "idx_stock_history_reference_code", columnList = "reference_code")
+                @Index(name = "idx_stock_history_reference_code", columnList = "reference_code"),
+                // Index cho tenant filter
+                @Index(name = "idx_stock_history_tenant",         columnList = "tenant_id")
         }
 )
 @Getter
@@ -48,6 +50,21 @@ public class StockHistory {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    /**
+     * Định danh Cửa hàng sở hữu bản ghi này.
+     *
+     * THIẾT KẾC ĐẶC BIỆT:
+     * StockHistory không kế thừa TenantAwareBaseEntity (immutable entity không có updatedAt, isDeleted).
+     * tenantId được thêm trực tiếp ở đây và KHAI BÁO THỦ CÔNG khi tạo record.
+     *
+     * ⚠️  LƯỮu Ý:
+     * Không dùng @TenantId ở đây vì Hibernate sẽ cố gắng inject tự động vào INSERT,
+     * nhưng class này không kế thừa bất kỳ class nào có @TenantId configuration.
+     * Do đó, tenantId phải được set tường minh từ TenantContextHolder trong StockService.
+     */
+    @Column(name = "tenant_id", nullable = false, updatable = false)
+    private Long tenantId;
 
     /**
      * ID của biến thể sản phẩm bị biến động tồn kho.

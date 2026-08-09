@@ -225,6 +225,7 @@ public class OrderService {
             // Số lượng âm (-requestedQty) để thể hiện XUẤT KHO (EXPORT).
             // -------------------------------------------------------
             StockHistory history = StockHistory.builder()
+                    .tenantId(com.example.store_clothes.multitenancy.TenantContextHolder.getTenantId())
                     .variantId(variant.getId())
                     .changeQuantity(-requestedQty)                // Âm vì là XUẤT KHO
                     .transactionType(TransactionType.EXPORT)
@@ -393,6 +394,7 @@ public class OrderService {
             // referenceCode = "CANCEL-" + orderCode: tra cứu nguồn gốc
             // ------------------------------------------------------------------
             StockHistory history = StockHistory.builder()
+                    .tenantId(com.example.store_clothes.multitenancy.TenantContextHolder.getTenantId())
                     .variantId(variant.getId())
                     .changeQuantity(item.getQuantity())          // Dương = hoàn kho
                     .transactionType(TransactionType.RETURN)

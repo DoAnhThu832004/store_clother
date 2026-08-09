@@ -22,9 +22,14 @@ import java.util.List;
 @Entity
 @Table(
     name = "orders",
+    uniqueConstraints = {
+        // Mã hóa đơn duy nhất trong phạm vi cửa hàng (tenant).
+        @UniqueConstraint(name = "uq_order_tenant_code", columnNames = {"tenant_id", "order_code"})
+    },
     indexes = {
-        @Index(name = "idx_order_code", columnList = "order_code", unique = true),
-        @Index(name = "idx_order_created_at", columnList = "created_at")
+        @Index(name = "idx_order_code",       columnList = "order_code"),
+        @Index(name = "idx_order_created_at", columnList = "created_at"),
+        @Index(name = "idx_order_tenant",     columnList = "tenant_id")
     }
 )
 @Getter
@@ -37,10 +42,10 @@ import java.util.List;
 public class Order extends BaseUuidEntity {
 
     /**
-     * Mã hóa đơn duy nhất. Format: HD-YYYYMMDD-XXXX.
-     * Được sinh tự động trong OrderService.
+     * Mã hóa đơn - duy nhất trong phạm vi cửa hàng (tenant). Format: HD-YYYYMMDD-XXXX.
+     * unique=false vì đã dùng composite unique (tenant_id, order_code) phạm vi table.
      */
-    @Column(name = "order_code", nullable = false, unique = true, length = 30)
+    @Column(name = "order_code", nullable = false, length = 30)
     private String orderCode;
 
     /**

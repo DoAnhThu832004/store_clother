@@ -29,10 +29,15 @@ import java.util.List;
 @Entity
 @Table(
     name = "categories",
+    uniqueConstraints = {
+        // Slug duy nhất trong phạm vi cửa hàng (tenant).
+        @UniqueConstraint(name = "uq_category_tenant_slug", columnNames = {"tenant_id", "slug"})
+    },
     indexes = {
         @Index(name = "idx_category_slug",   columnList = "slug"),
         @Index(name = "idx_category_parent",  columnList = "parent_id"),
-        @Index(name = "idx_category_deleted", columnList = "is_deleted")
+        @Index(name = "idx_category_deleted", columnList = "is_deleted"),
+        @Index(name = "idx_category_tenant",  columnList = "tenant_id")
     }
 )
 @Getter
@@ -47,7 +52,7 @@ import java.util.List;
     WHERE id = ?
     """)
 @SQLRestriction("is_deleted = false")
-public class Category extends BaseEntity {
+public class Category extends TenantAwareBaseEntity {
 
     /**
      * Tên danh mục. Ví dụ: "Thời trang Nam", "Áo khoác".
@@ -57,11 +62,11 @@ public class Category extends BaseEntity {
 
     /**
      * Slug URL-friendly được tự động sinh từ name.
-     * Ví dụ: "thoi-trang-nam", "ao-khoac".
-     * UNIQUE để đảm bảo mỗi danh mục có đường dẫn riêng biệt.
+     * Được giới hạn duy nhất trong phạm vi cửa hàng (tenant).
+     * unique=false vì đã dùng composite unique (tenant_id, slug) phạm vi table.
      * Khi xóa mềm → @SQLDelete append "_deleted_<UNIX>" để giải phóng constraint.
      */
-    @Column(name = "slug", nullable = false, unique = true, length = 200)
+    @Column(name = "slug", nullable = false, length = 200)
     private String slug;
 
     /**

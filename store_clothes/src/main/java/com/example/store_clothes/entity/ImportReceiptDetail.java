@@ -22,13 +22,20 @@ import java.math.BigDecimal;
  * Không dùng Soft Delete: Detail là bằng chứng kế toán, không được xóa.
  */
 @Entity
-@Table(name = "import_receipt_details")
+@Table(
+    name = "import_receipt_details",
+    indexes = {
+        @Index(name = "idx_import_detail_receipt", columnList = "receipt_id"),
+        @Index(name = "idx_import_detail_variant", columnList = "variant_id"),
+        @Index(name = "idx_import_detail_tenant",  columnList = "tenant_id")
+    }
+)
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ImportReceiptDetail extends BaseEntity {
+public class ImportReceiptDetail extends TenantAwareBaseEntity {
 
     /**
      * Phiếu nhập mà dòng này thuộc về.

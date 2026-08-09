@@ -90,20 +90,34 @@ public class UserService {
         }
 
         // -------------------------------------------------------
+        // VALIDATE 1b: Không cho tạo SUPER_ADMIN qua API này
+        // SUPER_ADMIN chỉ tồn tại ở tầng platform, không thuộc tenant nào.
+        // Việc gán SUPER_ADMIN phải được thực hiện trực tiếp trong DB bởi DBA.
+        // -------------------------------------------------------
+        if (request.getRoleName() == RoleName.ROLE_SUPER_ADMIN) {
+            throw new BusinessException(
+                    "Không được phép tạo tài khoản SUPER_ADMIN qua API. " +
+                    "Liên hệ DBA/DevOps để thực hiện thủ công.");
+        }
+
+        // -------------------------------------------------------
         // VALIDATE 2: Username chưa tồn tại
         // Dùng existsByUsername() (có @SQLRestriction) để check active users.
         // Username đã xóa đã được đổi tên → không block tạo mới.
+        // MULTI-TENANT: existsByUsername() chạy với tenant filter từ Context.
+        // → Các cửa hàng khác nhau có thể có cùng username — hoàn toàn hợp lệ.
         // -------------------------------------------------------
         if (userRepository.existsByUsername(request.getUsername())) {
-            throw new BusinessException("Username '" + request.getUsername() + "' đã tồn tại trong hệ thống.");
+            throw new BusinessException("Username '" + request.getUsername() + "' đã tồn tại trong cửa hàng này.");
         }
 
         // -------------------------------------------------------
         // VALIDATE 3: Email chưa tồn tại (nếu cung cấp)
+        // MULTI-TENANT: tương tự — email unique trong phạm vi tenant.
         // -------------------------------------------------------
         if (request.getEmail() != null && !request.getEmail().isBlank()
                 && userRepository.existsByEmail(request.getEmail())) {
-            throw new BusinessException("Email '" + request.getEmail() + "' đã được sử dụng.");
+            throw new BusinessException("Email '" + request.getEmail() + "' đã được sử dụng trong cửa hàng này.");
         }
 
         // -------------------------------------------------------
@@ -121,6 +135,11 @@ public class UserService {
         // Strength 12 = ~400ms/hash — vẫn OK cho login (user không notice)
         // nhưng khiến brute-force attack chậm hơn 4x.
         // Trade-off: Tạo user chậm hơn (chấp nhận được vì ít làm).
+        //
+        // MULTI-TENANCY NOTE:
+        // User.builder() KHÔNG cần set tenantId thủ công.
+        // JwtAuthFilter đã set TenantContextHolder.setTenantId(tenantId) từ JWT.
+        // Hibernate đọc @TenantId và tự inject tenant_id vào câu INSERT.
         // -------------------------------------------------------
         User newUser = User.builder()
                 .username(request.getUsername())

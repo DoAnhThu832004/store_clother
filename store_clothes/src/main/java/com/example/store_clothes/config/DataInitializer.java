@@ -2,6 +2,7 @@ package com.example.store_clothes.config;
 
 import com.example.store_clothes.entity.Role;
 import com.example.store_clothes.enums.RoleName;
+import com.example.store_clothes.multitenancy.TenantContextHolder;
 import com.example.store_clothes.repository.RoleRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,15 +36,30 @@ public class DataInitializer implements ApplicationRunner {
     @Transactional
     public void run(ApplicationArguments args) {
         log.info("DataInitializer: Checking and seeding master data...");
-        seedRoles();
+        // roles là master data của platform (không thuộc tenant nào) — không cần set tenant context.
+        // TenantContextHolder.clear() đảm bảo thread không mang tenant_id cũ từ lần chạy trước.
+        try {
+            TenantContextHolder.clear(); // Đảm bảo không có tenant context thừa từ thread trước
+            seedRoles();
+        } finally {
+            TenantContextHolder.clear(); // Luôn clear sau khi xong
+        }
         log.info("DataInitializer: Master data initialization completed.");
     }
 
     /**
-     * Seed 4 roles mặc định — idempotent (chạy nhiều lần không bị lỗi).
+     * Seed 5 roles mặc định — idempotent (chạy nhiều lần không bị lỗi).
      * Chỉ INSERT nếu role chưa tồn tại trong DB.
+     *
+     * ROLE_SUPER_ADMIN: Vai trò mới cho quản trị viên nền tảng SaaS.
+     *   - Bypass hoàn toàn tenant filter của Hibernate (xem TenantIdentifierResolver).
+     *   - Chỉ được gán thủ công bửi DBA/DevOps — không bao giờ gán qua API.
      */
     private void seedRoles() {
+        seedRoleIfNotExists(
+                RoleName.ROLE_SUPER_ADMIN,
+                "Quản trị viên nền tảng — Bypass tenant filter, quản lý mọi cửa hàng"
+        );
         seedRoleIfNotExists(
                 RoleName.ROLE_OWNER,
                 "Chủ cửa hàng — Toàn quyền quản lý hệ thống"

@@ -36,9 +36,16 @@ import java.util.stream.Collectors;
 @Entity
 @Table(
     name = "users",
+    uniqueConstraints = {
+        // Composite unique: 2 cửa hàng khác nhau có thể có cùng username.
+        // Trong cùng 1 cửa hàng, username phải duy nhất.
+        @UniqueConstraint(name = "uq_user_tenant_username", columnNames = {"tenant_id", "username"}),
+        @UniqueConstraint(name = "uq_user_tenant_email",    columnNames = {"tenant_id", "email"})
+    },
     indexes = {
         @Index(name = "idx_user_username", columnList = "username"),
-        @Index(name = "idx_user_email", columnList = "email")
+        @Index(name = "idx_user_email",    columnList = "email"),
+        @Index(name = "idx_user_tenant",   columnList = "tenant_id")
     }
 )
 @SQLDelete(sql = """
@@ -55,12 +62,13 @@ import java.util.stream.Collectors;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class User extends BaseEntity implements UserDetails {
+public class User extends TenantAwareBaseEntity implements UserDetails {
 
     /**
-     * Tên đăng nhập — duy nhất toàn hệ thống.
+     * Tên đăng nhập — duy nhất trong phạm vi cửa hàng (tenant).
+     * unique=false vì đã dùng composite unique (tenant_id, username) phaໍ cấp trên.
      */
-    @Column(name = "username", nullable = false, unique = true, length = 50)
+    @Column(name = "username", nullable = false, length = 50)
     private String username;
 
     /**

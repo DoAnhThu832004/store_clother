@@ -11,6 +11,9 @@ import lombok.Setter;
 @Setter
 public class LoginRequest {
 
+    @NotBlank(message = "Mã cửa hàng không được để trống")
+    private String storeCode;
+
     @NotBlank(message = "Tên đăng nhập không được để trống")
     private String username;
 

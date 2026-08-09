@@ -129,6 +129,35 @@ public enum ErrorCode {
     DUPLICATE_EMAIL(HttpStatus.CONFLICT, "Email này đã được sử dụng bởi tài khoản khác"),
 
     // =========================================================================
+    // MULTI-TENANT — TENANT LIFECYCLE
+    // =========================================================================
+
+    /**
+     * Tenant đang bị tạm khóa bởi Super Admin.
+     * HTTP 403 — Rõ hơn 404: tenant tồn tại nhưng bị chặn.
+     * Client nhận code này để hiển thị thông báo "Cửa hàng đang bị tạm khóa"
+     * thay vì thông báo lỗi chung chung.
+     */
+    TENANT_SUSPENDED(HttpStatus.FORBIDDEN,
+        "Cửa hàng của bạn đang bị tạm khóa. Vui lòng liên hệ bộ phận hỗ trợ."),
+
+    /**
+     * Tenant đã hết hạn gói đăng ký.
+     * HTTP 402 Payment Required — ngữ nghĩa chính xác nhất cho trường hợp này.
+     * Client redirect đến trang gia hạn gói.
+     */
+    TENANT_EXPIRED(HttpStatus.PAYMENT_REQUIRED,
+        "Gói đăng ký của cửa hàng đã hết hạn. Vui lòng gia hạn để tiếp tục sử dụng."),
+
+    /**
+     * Tenant ID trong JWT không tồn tại trong DB.
+     * Xảy ra nếu tenant bị xóa thủ công khỏi DB nhưng user còn JWT cũ.
+     * HTTP 403 — Không phải 404 để tránh enumerate valid tenant IDs.
+     */
+    TENANT_NOT_FOUND(HttpStatus.FORBIDDEN,
+        "Cửa hàng không tồn tại hoặc đã bị xóa. Vui lòng đăng nhập lại."),
+
+    // =========================================================================
     // IDEMPOTENCY
     // =========================================================================
 
@@ -144,6 +173,7 @@ public enum ErrorCode {
 
     /** Lỗi hệ thống không xác định */
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "Đã xảy ra lỗi hệ thống. Vui lòng thử lại sau");
+
 
     // =========================================================================
 

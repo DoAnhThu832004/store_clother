@@ -33,9 +33,14 @@ import java.math.BigDecimal;
 @Entity
 @Table(
     name = "suppliers",
+    uniqueConstraints = {
+        // Số điện thoại duy nhất trong phạm vi cửa hàng (tenant).
+        @UniqueConstraint(name = "uq_supplier_tenant_phone", columnNames = {"tenant_id", "phone"})
+    },
     indexes = {
         @Index(name = "idx_supplier_phone",   columnList = "phone"),
-        @Index(name = "idx_supplier_deleted", columnList = "is_deleted")
+        @Index(name = "idx_supplier_deleted", columnList = "is_deleted"),
+        @Index(name = "idx_supplier_tenant",  columnList = "tenant_id")
     }
 )
 @Getter
@@ -50,7 +55,7 @@ import java.math.BigDecimal;
     WHERE id = ?
     """)
 @SQLRestriction("is_deleted = false")
-public class Supplier extends BaseEntity {
+public class Supplier extends TenantAwareBaseEntity {
 
     /**
      * Tên nhà cung cấp. Ví dụ: "Công ty TNHH Dệt may ABC".
@@ -60,10 +65,11 @@ public class Supplier extends BaseEntity {
 
     /**
      * Số điện thoại liên hệ của nhà cung cấp.
-     * UNIQUE: Mỗi NCC có số điện thoại riêng biệt.
+     * Duy nhất trong phạm vi cửa hàng (tenant).
+     * unique=false vì đã dùng composite unique (tenant_id, phone) phạm vi table.
      * Khi xóa mềm → @SQLDelete append "_deleted_<UNIX>" để giải phóng constraint.
      */
-    @Column(name = "phone", unique = true, length = 20)
+    @Column(name = "phone", length = 20)
     private String phone;
 
     /**

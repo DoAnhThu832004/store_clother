@@ -19,7 +19,7 @@ import java.util.function.Function;
  * JwtUtil - Tiện ích tạo và xác thực JWT Token.
  *
  * THIẾT KẾ:
- * - Access Token: Thời hạn 24h, chứa extra claims (userId, fullName, roles).
+ * - Access Token: Thời hạn 24h, chứa extra claims (userId, fullName, roles, tenantId).
  * - Refresh Token: Thời hạn 7 ngày, chỉ chứa username (dùng để cấp lại access token).
  *
  * SECRET KEY:
@@ -32,6 +32,33 @@ import java.util.function.Function;
 @Slf4j
 @Component
 public class JwtUtil {
+
+    // =========================================================================
+    // JWT Claim Key Constants — Dùng chung giữa generateToken() và extract*()
+    // Tập trung ở đây để tránh typo khi đọc/ghi claims
+    // =========================================================================
+
+    /** Key chứa ID nội bộ của User (Long). */
+    public static final String CLAIM_USER_ID   = "userId";
+
+    /** Key chứa họ tên đầy đủ của User (String). */
+    public static final String CLAIM_FULL_NAME = "fullName";
+
+    /** Key chứa danh sách roles (Collection<String>). */
+    public static final String CLAIM_ROLES     = "roles";
+
+    /**
+     * Key chứa ID của Tenant (cửa hàng) mà User thuộc về.
+     *
+     * SECURITY NOTE:
+     * tenantId trong JWT là "claim of convenience" — giúp tránh query DB tại Filter.
+     * Tuy nhiên, Hibernate @TenantId là tuyến phòng thủ cuối cùng thực sự tin cậy.
+     * Ngay cả khi JWT bị forge (nếu secret bị lộ), Hibernate vẫn đảm bảo
+     * data isolation ở tầng DB vì tenantId được verify từ user session.
+     *
+     * Super Admin: tenantId = null trong JWT → filter bypass.
+     */
+    public static final String CLAIM_TENANT_ID = "tenantId";
 
     /**
      * Khóa bí mật từ config. Cấu hình trong application.yaml:
@@ -54,8 +81,19 @@ public class JwtUtil {
     // =========================================================================
 
     /**
-     * Tạo Access Token với extra claims (userId, fullName, roles).
+     * Tạo Access Token với extra claims (userId, fullName, roles, tenantId).
      * Extra claims được nhúng vào JWT payload → không cần query DB tại Filter.
+     *
+     * MULTI-TENANT: extraClaims PHẢI chứa "tenantId" (Long hoặc null cho SUPER_ADMIN).
+     * Caller (AuthService) chịu trách nhiệm build đúng extraClaims:
+     * <pre>
+     *   Map.of(
+     *     JwtUtil.CLAIM_USER_ID,   user.getId(),
+     *     JwtUtil.CLAIM_FULL_NAME, user.getFullName(),
+     *     JwtUtil.CLAIM_ROLES,     roles,
+     *     JwtUtil.CLAIM_TENANT_ID, user.getTenantId()  // null nếu SUPER_ADMIN
+     *   )
+     * </pre>
      *
      * @param user        UserDetails của người dùng vừa xác thực thành công
      * @param extraClaims Map chứa các thông tin bổ sung cần đóng gói vào token
@@ -70,7 +108,13 @@ public class JwtUtil {
      * Dùng để cấp lại access token khi hết hạn, không dùng để xác thực API.
      */
     public String generateRefreshToken(UserDetails user) {
-        return buildToken(user.getUsername(), Map.of(), refreshTokenExpiration);
+        Long tenantId = null;
+        if (user instanceof User) {
+            tenantId = ((User) user).getTenantId();
+        }
+        Map<String, Object> extraClaims = new java.util.HashMap<>();
+        extraClaims.put(CLAIM_TENANT_ID, tenantId);
+        return buildToken(user.getUsername(), extraClaims, refreshTokenExpiration);
     }
 
     /** Hàm tạo token dùng chung. */
@@ -112,6 +156,29 @@ public class JwtUtil {
     /** Trích xuất thời hạn token. */
     public Date extractExpiration(String token) {
         return extractClaim(token, Claims::getExpiration);
+    }
+
+    /**
+     * Trích xuất tenantId từ JWT payload.
+     *
+     * Trả về null nếu:
+     *   (a) token không có claim "tenantId" (Refresh Token, token cũ trước migration)
+     *   (b) claim "tenantId" được set null tường minh (SUPER_ADMIN)
+     *
+     * JwtAuthFilter sẽ xử lý null bằng cách không set TenantContextHolder
+     * → TenantIdentifierResolver trả về null → Hibernate bypass filter (Super Admin mode).
+     *
+     * @param token JWT token đã được parse thành công
+     * @return tenantId (Long) hoặc null
+     */
+    public Long extractTenantId(String token) {
+        Object tenantIdRaw = extractClaim(token, claims -> claims.get(CLAIM_TENANT_ID));
+        if (tenantIdRaw == null) {
+            return null;
+        }
+        // JJWT deserialize số nguyên thành Integer (nếu value nhỏ) hoặc Long.
+        // Phải cast qua Number để xử lý cả 2 trường hợp an toàn.
+        return ((Number) tenantIdRaw).longValue();
     }
 
     /** Generic: Trích xuất bất kỳ claim nào từ token. */

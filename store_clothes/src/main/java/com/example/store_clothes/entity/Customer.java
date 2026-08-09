@@ -41,10 +41,15 @@ import java.math.BigDecimal;
 @Entity
 @Table(
     name = "customers",
+    uniqueConstraints = {
+        // Số điện thoại duy nhất trong phạm vi cửa hàng (tenant).
+        @UniqueConstraint(name = "uq_customer_tenant_phone", columnNames = {"tenant_id", "phone"})
+    },
     indexes = {
         @Index(name = "idx_customer_phone",   columnList = "phone"),
         @Index(name = "idx_customer_name",    columnList = "name"),
-        @Index(name = "idx_customer_deleted", columnList = "is_deleted")
+        @Index(name = "idx_customer_deleted", columnList = "is_deleted"),
+        @Index(name = "idx_customer_tenant",  columnList = "tenant_id")
     }
 )
 @Getter
@@ -59,7 +64,7 @@ import java.math.BigDecimal;
     WHERE id = ?
     """)
 @SQLRestriction("is_deleted = false")
-public class Customer extends BaseEntity {
+public class Customer extends TenantAwareBaseEntity {
 
     /**
      * Tên khách hàng. Bắt buộc, tối đa 200 ký tự.
@@ -69,11 +74,11 @@ public class Customer extends BaseEntity {
 
     /**
      * Số điện thoại khách hàng.
-     * UNIQUE: Mỗi KH có một SĐT riêng biệt.
-     * Khi xóa mềm → @SQLDelete append "_deleted_<UNIX>" để giải phóng constraint,
-     * cho phép tạo KH mới với cùng SĐT trong tương lai.
+     * Duy nhất trong phạm vi cửa hàng (tenant).
+     * unique=false vì đã dùng composite unique (tenant_id, phone) phạm vi table.
+     * Khi xóa mềm → @SQLDelete append "_deleted_<UNIX>" để giải phóng constraint.
      */
-    @Column(name = "phone", unique = true, length = 30)
+    @Column(name = "phone", length = 30)
     private String phone;
 
     /**

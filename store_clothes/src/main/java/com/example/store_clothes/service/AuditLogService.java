@@ -74,6 +74,7 @@ public class AuditLogService {
                     String details) {
         try {
             AuditLog auditLog = AuditLog.builder()
+                    .tenantId(com.example.store_clothes.multitenancy.TenantContextHolder.getTenantId())
                     .userId(userId)
                     .username(username)
                     .action(action)

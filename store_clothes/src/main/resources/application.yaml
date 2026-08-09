@@ -10,6 +10,7 @@ spring:
       port: ${REDIS_PORT:6379}
       password: ${REDIS_PASSWORD:}
       timeout: 2000ms
+
   datasource:
     url: ${DBMS_CONNECTION:jdbc:mysql://localhost:3306/store_clothes?useSSL=false&serverTimezone=Asia/Ho_Chi_Minh&allowPublicKeyRetrieval=true&rewriteBatchedStatements=true}
     driverClassName: "com.mysql.cj.jdbc.Driver"
@@ -22,9 +23,10 @@ spring:
       max-lifetime: 1800000
 
   jpa:
+    open-in-view: false
     hibernate:
-      # update: Hibernate tự update schema theo entity (dùng cho dev).
-      # Chuyển sang 'validate' hoặc 'none' khi deploy production.
+      # validate: Hibernate kiểm tra schema khớp với entity, không tự sửa DB.
+      # Flyway sẽ đảm nhiệm việc quản lý schema — không để Hibernate tự sửa production DB.
       ddl-auto: update
     show-sql: false
     properties:
@@ -37,12 +39,35 @@ spring:
           batch_versioned_data: true
         order_inserts: true
         order_updates: true
+        # =================================================================
+        # MULTI-TENANCY CONFIGURATION (Hibernate 6 DISCRIMINATOR strategy)
+        # =================================================================
+        # TenantIdentifierResolver tự đăng ký qua HibernatePropertiesCustomizer bean.
+        # Không cần khai báo thủ công ở đây, Spring Boot sẽ tự động pick up bean.
 
   jackson:
     date-format: yyyy-MM-dd HH:mm:ss
     time-zone: Asia/Ho_Chi_Minh
     serialization:
       write-dates-as-timestamps: false
+
+  # ============================================================
+  # Flyway Migration Configuration
+  # ============================================================
+  flyway:
+    enabled: false
+    locations: classpath:db/migration
+    sql-migration-prefix: V
+    sql-migration-separator: __
+    sql-migration-suffixes: .sql
+    baseline-on-migrate: true
+    baseline-version: 1
+    validate-on-migrate: true
+    # Tự động xóa bản ghi FAILED trong flyway_schema_history trước khi retry
+    # Cần thiết khi V2 đã fail lần trước — không cần chạy flyway:repair thủ công
+    repair-on-migrate: true
+    # Cho phép migration chạy lại nếu checksum thay đổi (sau khi sửa file SQL)
+    out-of-order: false
 
 springdoc:
   api-docs:
@@ -69,8 +94,8 @@ jwt:
   # Trong production: Lấy từ biến môi trường: ${JWT_SECRET}
   secret: ${JWT_SECRET:dGhpc2lzYXZlcnlsb25nc2VjcmV0a2V5Zm9yanduYXV0aHN5c3RlbTI2Cg==}
 
-  # Access Token hết hạn sau 24 giờ (86400000 ms)
-  access-token-expiration: ${JWT_ACCESS_EXPIRATION:86400000}
+  # Access Token hết hạn sau 15 phút (900000 ms)
+  access-token-expiration: ${JWT_ACCESS_EXPIRATION:900000}
 
   # Refresh Token hết hạn sau 7 ngày (604800000 ms)
   refresh-token-expiration: ${JWT_REFRESH_EXPIRATION:604800000}

@@ -5,7 +5,10 @@ import com.example.store_clothes.dto.request.LoginRequest;
 import com.example.store_clothes.dto.response.AuthResponse;
 import com.example.store_clothes.entity.User;
 import com.example.store_clothes.exception.BusinessException;
+import com.example.store_clothes.repository.TenantRepository;
 import com.example.store_clothes.repository.UserRepository;
+import com.example.store_clothes.multitenancy.TenantContextHolder;
+import com.example.store_clothes.entity.Tenant;
 import com.example.store_clothes.security.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -57,6 +60,7 @@ public class AuthService {
     private final UserRepository userRepository;
     private final JwtUtil jwtUtil;
     private final PasswordEncoder passwordEncoder;
+    private final TenantRepository tenantRepository;
 
     // Inject AuditLogService để ghi log bất đồng bộ
     // Phải inject qua constructor (không dùng self-invocation) để @Async hoạt động
@@ -83,7 +87,6 @@ public class AuthService {
      * @throws LockedException         Nếu tài khoản bị khóa
      * @throws DisabledException       Nếu tài khoản bị vô hiệu hóa
      */
-    @Transactional
     public AuthResponse login(LoginRequest request) {
 
         // ---------------------------------------------------------------
@@ -94,7 +97,15 @@ public class AuthService {
         //   3. Kiểm tra isEnabled(), isAccountNonLocked()
         // Nếu thất bại → ném BadCredentialsException/LockedException/DisabledException
         // ---------------------------------------------------------------
-        Authentication auth;
+        // ---------------------------------------------------------------
+        // BƯỚC 0: Xác định Tenant từ storeCode
+        // ---------------------------------------------------------------
+        Tenant tenant = tenantRepository.findByCode(request.getStoreCode())
+                .orElseThrow(() -> new BadCredentialsException("Mã cửa hàng không hợp lệ"));
+        
+        TenantContextHolder.setTenantId(tenant.getId());
+
+        Authentication auth = null;
         try {
             auth = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
@@ -121,6 +132,11 @@ public class AuthService {
 
             log.warn("Login failed for username={}: {}", request.getUsername(), failReason);
             throw ex; // Re-throw để GlobalExceptionHandler bắt và trả HTTP 401
+        } finally {
+            // Đảm bảo clear context nếu login thất bại
+            if (auth == null) {
+                TenantContextHolder.clear();
+            }
         }
 
         // ---------------------------------------------------------------
@@ -144,15 +160,19 @@ public class AuthService {
 
         // ---------------------------------------------------------------
         // BƯỚC 3: Tạo JWT với extra claims
-        // Nhúng userId, fullName, roles vào payload → không cần query DB tại Filter
+        // Nhúc userId, fullName, roles, tenantId vào payload → không cần query DB tại Filter
+        //
+        // MULTI-TENANT: tenantId = null nếu user là SUPER_ADMIN (không có tenant).
+        // JwtAuthFilter sẽ đọc claim này và set vào TenantContextHolder.
         // ---------------------------------------------------------------
-        Map<String, Object> extraClaims = Map.of(
-                "userId",   user.getId(),
-                "fullName", user.getFullName(),
-                "roles",    user.getAuthorities().stream()
-                                .map(a -> a.getAuthority())
-                                .collect(Collectors.toList())
-        );
+        Map<String, Object> extraClaims = new java.util.HashMap<>();
+        extraClaims.put(JwtUtil.CLAIM_USER_ID,   user.getId());
+        extraClaims.put(JwtUtil.CLAIM_FULL_NAME, user.getFullName());
+        extraClaims.put(JwtUtil.CLAIM_ROLES,     user.getAuthorities().stream()
+                            .map(a -> a.getAuthority())
+                            .collect(Collectors.toList()));
+        // tenantId: null cho SUPER_ADMIN (không thuộc tenant nào)
+        extraClaims.put(JwtUtil.CLAIM_TENANT_ID, user.getTenantId());
 
         String accessToken  = jwtUtil.generateToken(user, extraClaims);
         String refreshToken = jwtUtil.generateRefreshToken(user);
@@ -179,23 +199,27 @@ public class AuthService {
 
         log.info("User logged in successfully: username={}, roles={}", user.getUsername(), rolesStr);
 
-        // ---------------------------------------------------------------
-        // BƯỚC 5: Build và trả response
-        // ---------------------------------------------------------------
-        return AuthResponse.builder()
-                .accessToken(accessToken)
-                .refreshToken(refreshToken)
-                .expiresIn(86400L) // 24h = 86400 giây
-                .userInfo(AuthResponse.UserInfo.builder()
-                        .id(user.getId())
-                        .username(user.getUsername())
-                        .fullName(user.getFullName())
-                        .email(user.getEmail())
-                        .roles(user.getAuthorities().stream()
-                                .map(a -> a.getAuthority())
-                                .collect(Collectors.toSet()))
-                        .build())
-                .build();
+        try {
+            // ---------------------------------------------------------------
+            // BƯỚC 5: Build và trả response
+            // ---------------------------------------------------------------
+            return AuthResponse.builder()
+                    .accessToken(accessToken)
+                    .refreshToken(refreshToken)
+                    .expiresIn(86400L) // 24h = 86400 giây
+                    .userInfo(AuthResponse.UserInfo.builder()
+                            .id(user.getId())
+                            .username(user.getUsername())
+                            .fullName(user.getFullName())
+                            .email(user.getEmail())
+                            .roles(user.getAuthorities().stream()
+                                    .map(a -> a.getAuthority())
+                                    .collect(Collectors.toSet()))
+                            .build())
+                    .build();
+        } finally {
+            TenantContextHolder.clear();
+        }
     }
 
     // =========================================================================
@@ -210,30 +234,39 @@ public class AuthService {
      *
      * @Transactional(readOnly = true): Chỉ đọc DB.
      */
-    @Transactional(readOnly = true)
     public AuthResponse refresh(String refreshToken) {
-        String username = jwtUtil.extractUsername(refreshToken);
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new BusinessException("Token không hợp lệ"));
-
-        if (!jwtUtil.validateToken(refreshToken, user)) {
-            throw new BusinessException("Refresh token đã hết hạn hoặc không hợp lệ");
+        Long tenantId = jwtUtil.extractTenantId(refreshToken);
+        if (tenantId != null) {
+            TenantContextHolder.setTenantId(tenantId);
         }
 
-        Map<String, Object> extraClaims = Map.of(
-                "userId",   user.getId(),
-                "fullName", user.getFullName(),
-                "roles",    user.getAuthorities().stream()
-                                .map(a -> a.getAuthority())
-                                .collect(Collectors.toList())
-        );
+        try {
+            String username = jwtUtil.extractUsername(refreshToken);
+            User user = userRepository.findByUsername(username)
+                    .orElseThrow(() -> new BusinessException("Token không hợp lệ"));
+
+            if (!jwtUtil.validateToken(refreshToken, user)) {
+                throw new BusinessException("Refresh token đã hết hạn hoặc không hợp lệ");
+            }
+
+        Map<String, Object> extraClaims = new java.util.HashMap<>();
+        extraClaims.put(JwtUtil.CLAIM_USER_ID,   user.getId());
+        extraClaims.put(JwtUtil.CLAIM_FULL_NAME, user.getFullName());
+        extraClaims.put(JwtUtil.CLAIM_ROLES,     user.getAuthorities().stream()
+                            .map(a -> a.getAuthority())
+                            .collect(Collectors.toList()));
+        // Refresh token cũng phải mang tenantId để đảm bảo thiết lập đúng context sau khi làm mới
+        extraClaims.put(JwtUtil.CLAIM_TENANT_ID, user.getTenantId());
         String newAccessToken = jwtUtil.generateToken(user, extraClaims);
 
-        return AuthResponse.builder()
-                .accessToken(newAccessToken)
-                .refreshToken(refreshToken)
-                .expiresIn(86400L)
-                .build();
+            return AuthResponse.builder()
+                    .accessToken(newAccessToken)
+                    .refreshToken(refreshToken) // Cần lưu ý: Nếu muốn xoay vòng refresh token, có thể generate lại ở đây
+                    .expiresIn(86400L)
+                    .build();
+        } finally {
+            TenantContextHolder.clear();
+        }
     }
 
     // =========================================================================

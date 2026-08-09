@@ -62,6 +62,26 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * Xử lý: TenantNotOperationalException — Cửa hàng bị Suspended hoặc Expired.
+     *
+     * Handler riêng biệt (dù kế thừa DomainException) vì:
+     *   1. Log ở mức WARN với context tenantId để monitoring/alerting dễ hơn.
+     *   2. Tách biệt metric: phân biệt "lỗi nghiệp vụ thường" vs "tenant bị block".
+     *   3. Trong tương lai có thể thêm logic redirect đến trang gia hạn gói.
+     *
+     * HTTP status: 403 (SUSPENDED/NOT_FOUND) hoặc 402 (EXPIRED) — lấy từ ErrorCode.
+     */
+    @ExceptionHandler(TenantNotOperationalException.class)
+    public ResponseEntity<ApiResponse<Void>> handleTenantNotOperational(
+            TenantNotOperationalException ex) {
+        ErrorCode code = ex.getErrorCode();
+        log.warn("[TENANT_BLOCKED] code={}, message={}", code.name(), ex.getMessage());
+        return ResponseEntity
+                .status(code.getHttpStatus())
+                .body(ApiResponse.error(code.name(), ex.getMessage()));
+    }
+
+    /**
      * Xử lý: Không tìm thấy entity (ID không tồn tại, đã bị xóa mềm...)
      * → HTTP 404 Not Found
      */

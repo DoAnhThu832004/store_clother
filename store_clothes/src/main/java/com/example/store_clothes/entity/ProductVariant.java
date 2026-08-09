@@ -27,11 +27,17 @@ import java.math.BigDecimal;
 @Entity
 @Table(
     name = "product_variants",
+    uniqueConstraints = {
+        // SKU duy nhất trong phạm vi cửa hàng (tenant).
+        @UniqueConstraint(name = "uq_variant_tenant_sku", columnNames = {"tenant_id", "sku"})
+    },
     indexes = {
         // Index cho tìm kiếm theo SKU - thường dùng nhất trong nghiệp vụ bán hàng
-        @Index(name = "idx_variant_sku", columnList = "sku"),
+        @Index(name = "idx_variant_sku",     columnList = "sku"),
         // Index cho tìm kiếm theo Barcode - dùng khi quét mã vạch
-        @Index(name = "idx_variant_barcode", columnList = "barcode")
+        @Index(name = "idx_variant_barcode", columnList = "barcode"),
+        // Index cho tenant filter
+        @Index(name = "idx_variant_tenant",  columnList = "tenant_id")
     }
 )
 @Getter
@@ -41,13 +47,13 @@ import java.math.BigDecimal;
 @Builder
 @SQLDelete(sql = "UPDATE product_variants SET is_deleted = true, sku = CONCAT(sku, '_deleted_', UNIX_TIMESTAMP()) WHERE id = ?")
 @SQLRestriction("is_deleted = false")
-public class ProductVariant extends BaseEntity {
+public class ProductVariant extends TenantAwareBaseEntity {
 
     /**
-     * Stock Keeping Unit - Mã quản lý tồn kho nội bộ, duy nhất trên toàn hệ thống.
-     * Ví dụ: "AOTD-DEN-L" (Áo thun dài - Đen - L)
+     * Stock Keeping Unit - Mã quản lý tồn kho nội bộ, duy nhất trong phạm vi cửa hàng.
+     * unique=false vì đã dùng composite unique (tenant_id, sku) phạm vi table.
      */
-    @Column(nullable = false, unique = true, length = 50)
+    @Column(nullable = false, length = 50)
     private String sku;
 
     /**

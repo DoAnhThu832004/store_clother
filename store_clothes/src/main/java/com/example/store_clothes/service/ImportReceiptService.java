@@ -262,6 +262,7 @@ public class ImportReceiptService {
             // [IMMUTABLE INSERT] - Tạo bản ghi thẻ kho bất biến
             // Chỉ được INSERT - không bao giờ UPDATE/DELETE bản ghi này
             StockHistory history = StockHistory.builder()
+                    .tenantId(com.example.store_clothes.multitenancy.TenantContextHolder.getTenantId())
                     .variantId(variant.getId())
                     .changeQuantity(detail.getQuantity())    // Số dương (+) vì là NHẬP
                     .transactionType(TransactionType.IMPORT)

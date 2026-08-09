@@ -1,5 +1,6 @@
 package com.example.store_clothes.security;
 
+import com.example.store_clothes.multitenancy.TenantLifecycleFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -39,6 +40,9 @@ public class SecurityConfig {
 
     private final UserDetailsServiceImpl userDetailsService;
     private final JwtAuthFilter jwtAuthFilter;
+    private final TenantLifecycleFilter tenantLifecycleFilter;
+    private final CustomAccessDeniedHandler accessDeniedHandler;
+    private final CustomAuthenticationEntryPoint authenticationEntryPoint;
 
     /**
      * Chuỗi bộ lọc bảo mật chính.
@@ -55,43 +59,53 @@ public class SecurityConfig {
             // Cấu hình phân quyền theo URL
             .authorizeHttpRequests(auth -> auth
 
-                // -------------------------------------------------------
-                // PUBLIC ENDPOINTS — Không cần JWT
-                // -------------------------------------------------------
-                .requestMatchers(
-                    "/api/v1/auth/login",
-                    "/api/v1/auth/refresh"
-                ).permitAll()
+            // -------------------------------------------------------
+            // PUBLIC ENDPOINTS — Không cần JWT
+            // -------------------------------------------------------
+            .requestMatchers(
+                "/api/v1/auth/login",
+                "/api/v1/auth/refresh",
+                "/api/v1/tenants/register"      // Đăng ký cửa hàng mới — public
+            ).permitAll()
 
-                // Swagger UI & API docs (chỉ dùng trong dev, cần restrict trên production)
-                .requestMatchers(
-                    "/v3/api-docs/**",
-                    "/swagger-ui/**",
-                    "/swagger-ui.html"
-                ).permitAll()
+            // Swagger UI & API docs (chỉ dùng trong dev, cần restrict trên production)
+            .requestMatchers(
+                "/v3/api-docs/**",
+                "/swagger-ui/**",
+                "/swagger-ui.html"
+            ).permitAll()
 
-                // -------------------------------------------------------
-                // PROTECTED ENDPOINTS — Phân quyền chi tiết theo role
-                // -------------------------------------------------------
+            // -------------------------------------------------------
+            // SUPER_ADMIN — Bypass toàn bộ phân quyền tenant
+            // -------------------------------------------------------
+            // SUPER_ADMIN có quyền truy cập mọi endpoint.
+            // Hibernate @TenantId filter đã được bypass ở TenantIdentifierResolver.
+            // @PreAuthorize("hasRole('SUPER_ADMIN')") dùng thêm ở method level
+            // cho các API admin đặc thù (xem / suspend tenant, v.v.)
+            .requestMatchers("/api/v1/admin/**").hasRole("SUPER_ADMIN")
 
-                // Quản lý nhân viên (User): Chỉ OWNER mới được tạo/xóa nhân viên
-                .requestMatchers(HttpMethod.POST, "/api/v1/users/**").hasRole("OWNER")
-                .requestMatchers(HttpMethod.DELETE, "/api/v1/users/**").hasRole("OWNER")
+            // -------------------------------------------------------
+            // PROTECTED ENDPOINTS — Phân quyền chi tiết theo role
+            // -------------------------------------------------------
 
-                // Nhập kho: OWNER, MANAGER, WAREHOUSE_STAFF
-                .requestMatchers("/api/v1/import-receipts/**")
-                    .hasAnyRole("OWNER", "MANAGER", "WAREHOUSE_STAFF")
+            // Quản lý nhân viên (User): Chỉ OWNER mới được tạo/xóa nhân viên
+            .requestMatchers(HttpMethod.POST, "/api/v1/users/**").hasRole("OWNER")
+            .requestMatchers(HttpMethod.DELETE, "/api/v1/users/**").hasRole("OWNER")
 
-                // Bán hàng (checkout): OWNER, MANAGER, CASHIER
-                .requestMatchers("/api/v1/orders/**")
-                    .hasAnyRole("OWNER", "MANAGER", "CASHIER")
+            // Nhập kho: OWNER, MANAGER, WAREHOUSE_STAFF
+            .requestMatchers("/api/v1/import-receipts/**")
+                .hasAnyRole("OWNER", "MANAGER", "WAREHOUSE_STAFF")
 
-                // Sản phẩm: Xem — tất cả; Tạo/Sửa — OWNER, MANAGER
-                .requestMatchers(HttpMethod.GET, "/api/v1/products/**").authenticated()
-                .requestMatchers("/api/v1/products/**").hasAnyRole("OWNER", "MANAGER")
+            // Bán hàng (checkout): OWNER, MANAGER, CASHIER
+            .requestMatchers("/api/v1/orders/**")
+                .hasAnyRole("OWNER", "MANAGER", "CASHIER")
 
-                // Mọi endpoint còn lại: phải đăng nhập
-                .anyRequest().authenticated()
+            // Sản phẩm: Xem — tất cả; Tạo/Sửa — OWNER, MANAGER
+            .requestMatchers(HttpMethod.GET, "/api/v1/products/**").authenticated()
+            .requestMatchers("/api/v1/products/**").hasAnyRole("OWNER", "MANAGER")
+
+            // Mọi endpoint còn lại: phải đăng nhập
+            .anyRequest().authenticated()
             )
 
             // Stateless: Không lưu session, mỗi request tự mang JWT
@@ -103,7 +117,19 @@ public class SecurityConfig {
             .authenticationProvider(authenticationProvider())
 
             // Đặt JwtAuthFilter TRƯỚC filter xác thực username/password mặc định
-            .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+            .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+
+            // TenantLifecycleFilter chạy SAU JwtAuthFilter (cần TenantContext đã được set)
+            // Kiểm tra tenant.isOperational() → block nếu SUSPENDED hoặc EXPIRED
+            .addFilterAfter(tenantLifecycleFilter, JwtAuthFilter.class)
+
+            // Cấu hình xử lý lỗi bảo mật — trả về JSON thay vì HTML mặc định
+            .exceptionHandling(ex -> ex
+                // 403 Forbidden: User đã login nhưng không đủ quyền
+                .accessDeniedHandler(accessDeniedHandler)
+                // 401 Unauthorized: Chưa login hoặc JWT hết hạn/sai
+                .authenticationEntryPoint(authenticationEntryPoint)
+            );
 
         return http.build();
     }

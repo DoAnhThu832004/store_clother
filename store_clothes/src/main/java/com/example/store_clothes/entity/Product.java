@@ -26,7 +26,17 @@ import java.util.List;
  *    Chỉ dùng @Getter, @Setter, @Builder, @NoArgsConstructor, @AllArgsConstructor.
  */
 @Entity
-@Table(name = "products")
+@Table(
+    name = "products",
+    uniqueConstraints = {
+        // 2 cửa hàng khác nhau có thể dùng cùng mã SP (ví dụ: cả 2 đều có "SP0001").
+        @UniqueConstraint(name = "uq_product_tenant_code", columnNames = {"tenant_id", "code"})
+    },
+    indexes = {
+        @Index(name = "idx_product_tenant",  columnList = "tenant_id"),
+        @Index(name = "idx_product_code",    columnList = "code")
+    }
+)
 @Getter
 @Setter
 @NoArgsConstructor
@@ -34,7 +44,7 @@ import java.util.List;
 @Builder
 @SQLDelete(sql = "UPDATE products SET is_deleted = true WHERE id = ?")
 @SQLRestriction("is_deleted = false")
-public class Product extends BaseEntity {
+public class Product extends TenantAwareBaseEntity {
 
     /**
      * Tên sản phẩm. Ví dụ: "Áo thun nam oversize".
@@ -43,10 +53,10 @@ public class Product extends BaseEntity {
     private String name;
 
     /**
-     * Mã sản phẩm - duy nhất trong hệ thống. Ví dụ: "SP0001".
-     * Không dùng @NaturalId ở đây vì không cần cache theo natural key phức tạp.
+     * Mã sản phẩm — duy nhất trong phạm vi cửa hàng (tenant). Ví dụ: "SP0001".
+     * unique=false vì đã dùng composite unique (tenant_id, code) phạm vi table.
      */
-    @Column(nullable = false, unique = true, length = 50)
+    @Column(nullable = false, length = 50)
     private String code;
 
     /**
