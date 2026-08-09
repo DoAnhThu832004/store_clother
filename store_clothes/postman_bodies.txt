@@ -1,0 +1,213 @@
+ENDPOINT: Đăng nhập (Login) - POST {{base_url}}/api/v1/auth/login
+BODY:
+{
+  "username": "owner",
+  "password": "password123"
+}
+---
+ENDPOINT: Đổi mật khẩu (Change Password) - PUT {{base_url}}/api/v1/auth/me/password
+BODY:
+{
+  "oldPassword": "password123",
+  "newPassword": "newpassword123"
+}
+---
+ENDPOINT: Đăng ký cửa hàng mới (Tenant) - POST {{base_url}}/api/v1/tenants/register
+BODY:
+{
+  "storeName": "Cửa hàng Thời trang Thu Hà",
+  "storeCode": "thuha-store",
+  "contactEmail": "contact@thuha.com",
+  "contactPhone": "0912345678",
+  "ownerUsername": "admin_thuha",
+  "ownerPassword": "password123",
+  "ownerFullName": "Nguyễn Thị Thu Hà",
+  "ownerEmail": "ha.nguyen@example.com",
+  "ownerPhone": "0987654321"
+}
+---
+ENDPOINT: Tạo nhân viên mới (USR-01) - POST {{base_url}}/api/v1/users
+BODY:
+{
+  "username": "cashier1",
+  "password": "password123",
+  "fullName": "Nguyễn Văn Ngân",
+  "email": "cashier1@example.com",
+  "phone": "0912345678",
+  "roleName": "ROLE_CASHIER"
+}
+---
+ENDPOINT: Cập nhật nhân viên & Quyền (USR-04) - PUT {{base_url}}/api/v1/users/2
+BODY:
+{
+  "fullName": "Nguyễn Văn Ngân Sửa",
+  "email": "cashier1_edit@example.com",
+  "phone": "0912345679",
+  "status": "ACTIVE",
+  "roleName": "ROLE_MANAGER"
+}
+---
+ENDPOINT: Tạo khách hàng (CUS-01) - POST {{base_url}}/api/v1/customers
+BODY:
+{
+  "name": "Trần Văn Khách",
+  "phone": "0987654321",
+  "email": "khachhang@example.com",
+  "note": "Khách mua nhiều"
+}
+---
+ENDPOINT: Cập nhật khách hàng (CUS-04) - PUT {{base_url}}/api/v1/customers/1
+BODY:
+{
+  "name": "Trần Văn Khách Sửa",
+  "phone": "0987654321",
+  "email": "khachhang_updated@example.com",
+  "note": "Khách hàng thân thiết VIP"
+}
+---
+ENDPOINT: Tạo danh mục mới (CAT-01) - POST {{base_url}}/api/v1/categories
+BODY:
+{
+  "name": "Áo Thun Nam",
+  "parentId": null,
+  "status": "ACTIVE"
+}
+---
+ENDPOINT: Cập nhật danh mục (CAT-05) - PUT {{base_url}}/api/v1/categories/1
+BODY:
+{
+  "name": "Áo Thun Nam Cotton",
+  "parentId": null,
+  "status": "ACTIVE"
+}
+---
+ENDPOINT: Tạo sản phẩm thủ công - POST {{base_url}}/api/v1/products
+BODY:
+{
+  "name": "Áo Khoác Gió Nam",
+  "code": "AKG001",
+  "description": "Áo gió chống nước siêu nhẹ",
+  "status": "ACTIVE",
+  "variants": [
+    {
+      "sku": "AKG-DEN-M",
+      "barcode": "8931234567890",
+      "color": "Đen",
+      "size": "M",
+      "importPrice": 150000.00,
+      "salePrice": 250000.00,
+      "inventory": 50,
+      "status": "ACTIVE"
+    }
+  ]
+}
+---
+ENDPOINT: Sinh ma trận biến thể tự động - POST {{base_url}}/api/v1/products/matrix
+BODY:
+{
+  "name": "Quần Tây Nam Slimfit",
+  "description": "Quần tây chất liệu co giãn nhẹ",
+  "colors": ["Đen", "Xám"],
+  "sizes": ["29", "30", "31"],
+  "baseImportPrice": 180000.00,
+  "baseSalePrice": 320000.00
+}
+---
+ENDPOINT: Cập nhật sản phẩm - PUT {{base_url}}/api/v1/products/1
+BODY:
+{
+  "name": "Áo Khoác Gió Nam Cao Cấp",
+  "description": "Chất liệu chống nước, cản gió cực tốt",
+  "categoryId": 2
+}
+---
+ENDPOINT: Thêm biến thể đơn lẻ (PV-01) - POST {{base_url}}/api/v1/products/1/variants
+BODY:
+{
+  "color": "Đen",
+  "size": "L",
+  "sku": "AKG-DEN-L",
+  "barcode": "8931234567892",
+  "importPrice": 150000.00,
+  "salePrice": 250000.00,
+  "initialInventory": 20
+}
+---
+ENDPOINT: Cập nhật giá/trạng thái biến thể (PV-02) - PUT {{base_url}}/api/v1/products/variants/1
+BODY:
+{
+  "salePrice": 260000.00,
+  "importPrice": 155000.00,
+  "status": "ACTIVE"
+}
+---
+ENDPOINT: Điều chỉnh tồn kho thủ công (PV-02b) - POST {{base_url}}/api/v1/products/variants/1/stock-adjustment
+BODY:
+{
+  "newQuantity": 60,
+  "reason": "Kiểm kho phát hiện thừa 10 sản phẩm"
+}
+---
+ENDPOINT: Tạo nhà cung cấp (SUP-01) - POST {{base_url}}/api/v1/suppliers
+BODY:
+{
+  "name": "Xưởng may mặc Hà Nội",
+  "phone": "0243123456",
+  "email": "xuongmayhn@example.com",
+  "address": "Đông Anh, Hà Nội",
+  "taxCode": "0102030405"
+}
+---
+ENDPOINT: Cập nhật nhà cung cấp (SUP-04) - PUT {{base_url}}/api/v1/suppliers/1
+BODY:
+{
+  "name": "Xưởng may mặc Hà Nội Updated",
+  "phone": "0243123456",
+  "email": "xuongmayhn_new@example.com",
+  "address": "Gia Lâm, Hà Nội",
+  "taxCode": "0102030405-001"
+}
+---
+ENDPOINT: Tạo phiếu nhập nháp (DRAFT) - POST {{base_url}}/api/v1/imports
+BODY:
+{
+  "supplierId": 1,
+  "items": [
+    {
+      "variantId": 1,
+      "quantity": 100,
+      "importPrice": 150000.00
+    }
+  ],
+  "paidAmount": 10000000.00,
+  "note": "Nhập hàng thử nghiệm"
+}
+---
+ENDPOINT: Cập nhật phiếu nhập DRAFT (IR-02) - PUT {{base_url}}/api/v1/imports/1
+BODY:
+{
+  "supplierId": 1,
+  "items": [
+    {
+      "variantId": 1,
+      "quantity": 120,
+      "importPrice": 148000.00
+    }
+  ],
+  "paidAmount": 11000000.00,
+  "note": "Sửa phiếu nhập tăng số lượng"
+}
+---
+ENDPOINT: Thanh toán hóa đơn POS (Checkout) - POST {{base_url}}/api/v1/orders/checkout
+BODY:
+{
+  "items": [
+    {
+      "variantId": 1,
+      "quantity": 2
+    }
+  ],
+  "paidAmount": 600000.00,
+  "note": "Khách đưa chẵn 600k"
+}
+---

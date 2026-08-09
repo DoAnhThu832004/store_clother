@@ -1,0 +1,1568 @@
+{
+  "info": {
+    "name": "Store Clothes POS API",
+    "description": "Postman Collection for Store Clothes POS & Inventory Management System (Spring Boot)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "1. Authentication (Xác thực)",
+      "item": [
+        {
+          "name": "Đăng nhập (Login)",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"owner\",\n  \"password\": \"password123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Đăng nhập hệ thống để nhận JWT Access Token và Refresh Token."
+          }
+        },
+        {
+          "name": "Làm mới Token (Refresh Token)",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/refresh?refreshToken=YOUR_REFRESH_TOKEN_HERE",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "refresh"
+              ],
+              "query": [
+                {
+                  "key": "refreshToken",
+                  "value": "YOUR_REFRESH_TOKEN_HERE"
+                }
+              ]
+            },
+            "description": "Lấy access token mới bằng refresh token."
+          }
+        },
+        {
+          "name": "Thông tin cá nhân (Me)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/me",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "me"
+              ]
+            },
+            "description": "Lấy thông tin tài khoản đang đăng nhập từ JWT."
+          }
+        },
+        {
+          "name": "Đổi mật khẩu (Change Password)",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"oldPassword\": \"password123\",\n  \"newPassword\": \"newpassword123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/me/password",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "me",
+                "password"
+              ]
+            },
+            "description": "Đổi mật khẩu tài khoản hiện tại."
+          }
+        },
+        {
+          "name": "Đăng ký cửa hàng mới (Tenant)",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"storeName\": \"Cửa hàng Thời trang Thu Hà\",\n  \"storeCode\": \"thuha-store\",\n  \"contactEmail\": \"contact@thuha.com\",\n  \"contactPhone\": \"0912345678\",\n  \"ownerUsername\": \"admin_thuha\",\n  \"ownerPassword\": \"password123\",\n  \"ownerFullName\": \"Nguyễn Thị Thu Hà\",\n  \"ownerEmail\": \"ha.nguyen@example.com\",\n  \"ownerPhone\": \"0987654321\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/tenants/register",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "tenants",
+                "register"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. User Management (Nhân viên)",
+      "item": [
+        {
+          "name": "Tạo nhân viên mới (USR-01)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"cashier1\",\n  \"password\": \"password123\",\n  \"fullName\": \"Nguyễn Văn Ngân\",\n  \"email\": \"cashier1@example.com\",\n  \"phone\": \"0912345678\",\n  \"roleName\": \"ROLE_CASHIER\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/users",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users"
+              ]
+            },
+            "description": "Chỉ OWNER được tạo tài khoản nhân viên (ROLE_MANAGER, ROLE_CASHIER, ROLE_WAREHOUSE_STAFF)."
+          }
+        },
+        {
+          "name": "Danh sách nhân viên (USR-02)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/users?page=0&size=20&keyword=Ngân",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "20"
+                },
+                {
+                  "key": "keyword",
+                  "value": "Ngân"
+                },
+                {
+                  "key": "roleName",
+                  "value": "ROLE_CASHIER",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Lấy danh sách nhân viên (hỗ trợ filter từ khóa, role)."
+          }
+        },
+        {
+          "name": "Chi tiết nhân viên (USR-03)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/users/2",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "2"
+              ]
+            },
+            "description": "Xem chi tiết nhân viên theo ID kèm thống kê đơn hàng, phiếu nhập đã tạo."
+          }
+        },
+        {
+          "name": "Cập nhật nhân viên & Quyền (USR-04)",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Nguyễn Văn Ngân Sửa\",\n  \"email\": \"cashier1_edit@example.com\",\n  \"phone\": \"0912345679\",\n  \"status\": \"ACTIVE\",\n  \"roleName\": \"ROLE_MANAGER\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/users/2",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "2"
+              ]
+            },
+            "description": "Cập nhật thông tin nhân viên hoặc đổi vai trò (chỉ OWNER được gọi)."
+          }
+        },
+        {
+          "name": "Xóa mềm nhân viên (USR-05)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/users/2",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "2"
+              ]
+            },
+            "description": "Xóa mềm nhân viên (chỉ OWNER được gọi, không tự xóa chính mình)."
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Customer Management (Khách hàng)",
+      "item": [
+        {
+          "name": "Tạo khách hàng (CUS-01)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Trần Văn Khách\",\n  \"phone\": \"0987654321\",\n  \"email\": \"khachhang@example.com\",\n  \"note\": \"Khách mua nhiều\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/customers",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "customers"
+              ]
+            },
+            "description": "Tạo khách hàng mới."
+          }
+        },
+        {
+          "name": "Danh sách khách hàng (CUS-02)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/customers?page=0&size=20&keyword=Khách&hasLoyaltyPoints=false",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "customers"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "20"
+                },
+                {
+                  "key": "keyword",
+                  "value": "Khách"
+                },
+                {
+                  "key": "hasLoyaltyPoints",
+                  "value": "false"
+                }
+              ]
+            },
+            "description": "Danh sách khách hàng phân trang và filter."
+          }
+        },
+        {
+          "name": "Chi tiết khách hàng (CUS-03)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/customers/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "customers",
+                "1"
+              ]
+            },
+            "description": "Xem chi tiết thông tin và lịch sử đơn hàng của khách hàng."
+          }
+        },
+        {
+          "name": "Cập nhật khách hàng (CUS-04)",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Trần Văn Khách Sửa\",\n  \"phone\": \"0987654321\",\n  \"email\": \"khachhang_updated@example.com\",\n  \"note\": \"Khách hàng thân thiết VIP\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/customers/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "customers",
+                "1"
+              ]
+            },
+            "description": "Cập nhật thông tin khách hàng."
+          }
+        },
+        {
+          "name": "Xóa mềm khách hàng (CUS-05)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/customers/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "customers",
+                "1"
+              ]
+            },
+            "description": "Xóa mềm khách hàng (chỉ OWNER/MANAGER được gọi)."
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Category Management (Danh mục)",
+      "item": [
+        {
+          "name": "Tạo danh mục mới (CAT-01)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Áo Thun Nam\",\n  \"parentId\": null,\n  \"status\": \"ACTIVE\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/categories",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "categories"
+              ]
+            },
+            "description": "Tạo danh mục sản phẩm (Root hoặc Child)."
+          }
+        },
+        {
+          "name": "Danh sách danh mục phẳng (CAT-02)",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/categories?page=0&size=20&keyword=Áo",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "categories"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "20"
+                },
+                {
+                  "key": "keyword",
+                  "value": "Áo"
+                }
+              ]
+            },
+            "description": "Lấy danh sách phẳng (Public, không cần token)."
+          }
+        },
+        {
+          "name": "Cây danh mục phân cấp (CAT-03)",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/categories/tree",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "categories",
+                "tree"
+              ]
+            },
+            "description": "Lấy cây danh mục phân cấp (Root -> Children)."
+          }
+        },
+        {
+          "name": "Chi tiết danh mục (CAT-04)",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/categories/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "categories",
+                "1"
+              ]
+            },
+            "description": "Chi tiết danh mục kèm số sản phẩm đang active."
+          }
+        },
+        {
+          "name": "Cập nhật danh mục (CAT-05)",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Áo Thun Nam Cotton\",\n  \"parentId\": null,\n  \"status\": \"ACTIVE\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/categories/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "categories",
+                "1"
+              ]
+            },
+            "description": "Cập nhật tên, parent hoặc trạng thái danh mục."
+          }
+        },
+        {
+          "name": "Xóa mềm danh mục (CAT-06)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/categories/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "categories",
+                "1"
+              ]
+            },
+            "description": "Xóa mềm danh mục (chỉ OWNER, yêu cầu không có SP active hoặc con active)."
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Product & Variant Management (Hàng hóa)",
+      "item": [
+        {
+          "name": "Tạo sản phẩm thủ công",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Áo Khoác Gió Nam\",\n  \"code\": \"AKG001\",\n  \"description\": \"Áo gió chống nước siêu nhẹ\",\n  \"status\": \"ACTIVE\",\n  \"variants\": [\n    {\n      \"sku\": \"AKG-DEN-M\",\n      \"barcode\": \"8931234567890\",\n      \"color\": \"Đen\",\n      \"size\": \"M\",\n      \"importPrice\": 150000.00,\n      \"salePrice\": 250000.00,\n      \"inventory\": 50,\n      \"status\": \"ACTIVE\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/products",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "products"
+              ]
+            },
+            "description": "Tạo sản phẩm kèm theo danh sách biến thể ban đầu."
+          }
+        },
+        {
+          "name": "Sinh ma trận biến thể tự động",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Quần Tây Nam Slimfit\",\n  \"description\": \"Quần tây chất liệu co giãn nhẹ\",\n  \"colors\": [\"Đen\", \"Xám\"],\n  \"sizes\": [\"29\", \"30\", \"31\"],\n  \"baseImportPrice\": 180000.00,\n  \"baseSalePrice\": 320000.00\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/products/matrix",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "products",
+                "matrix"
+              ]
+            },
+            "description": "Tự động sinh ma trận biến thể theo Cartesian product (Colors x Sizes)."
+          }
+        },
+        {
+          "name": "Chi tiết sản phẩm",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/products/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "products",
+                "1"
+              ]
+            },
+            "description": "Lấy chi tiết thông tin sản phẩm và tất cả variant."
+          }
+        },
+        {
+          "name": "Cập nhật sản phẩm",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Áo Khoác Gió Nam Cao Cấp\",\n  \"description\": \"Chất liệu chống nước, cản gió cực tốt\",\n  \"categoryId\": 2\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/products/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "products",
+                "1"
+              ]
+            },
+            "description": "Cập nhật thông tin cơ bản sản phẩm gốc (không cho sửa code)."
+          }
+        },
+        {
+          "name": "Tìm biến thể theo SKU",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/products/variants/sku/AKG-DEN-M",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "products",
+                "variants",
+                "sku",
+                "AKG-DEN-M"
+              ]
+            },
+            "description": "Tìm nhanh biến thể sản phẩm theo SKU."
+          }
+        },
+        {
+          "name": "Tìm biến thể theo Barcode",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/products/variants/barcode/8931234567890",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "products",
+                "variants",
+                "barcode",
+                "8931234567890"
+              ]
+            },
+            "description": "Tìm nhanh biến thể theo Barcode (quét mã vạch)."
+          }
+        },
+        {
+          "name": "Thêm biến thể đơn lẻ (PV-01)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"color\": \"Đen\",\n  \"size\": \"L\",\n  \"sku\": \"AKG-DEN-L\",\n  \"barcode\": \"8931234567892\",\n  \"importPrice\": 150000.00,\n  \"salePrice\": 250000.00,\n  \"initialInventory\": 20\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/products/1/variants",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "products",
+                "1",
+                "variants"
+              ]
+            },
+            "description": "Thêm một variant đơn lẻ vào sản phẩm."
+          }
+        },
+        {
+          "name": "Cập nhật giá/trạng thái biến thể (PV-02)",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"salePrice\": 260000.00,\n  \"importPrice\": 155000.00,\n  \"status\": \"ACTIVE\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/products/variants/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "products",
+                "variants",
+                "1"
+              ]
+            },
+            "description": "Cập nhật giá và trạng thái cho biến thể."
+          }
+        },
+        {
+          "name": "Điều chỉnh tồn kho thủ công (PV-02b)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"newQuantity\": 60,\n  \"reason\": \"Kiểm kho phát hiện thừa 10 sản phẩm\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/products/variants/1/stock-adjustment",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "products",
+                "variants",
+                "1",
+                "stock-adjustment"
+              ]
+            },
+            "description": "Đặt tồn kho về giá trị mới, chỉ dành cho OWNER, yêu cầu lý do."
+          }
+        },
+        {
+          "name": "Xóa mềm sản phẩm",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/products/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "products",
+                "1"
+              ]
+            },
+            "description": "Xóa mềm sản phẩm gốc và tất cả biến thể của nó."
+          }
+        },
+        {
+          "name": "Xóa mềm biến thể (PV-03)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/products/variants/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "products",
+                "variants",
+                "1"
+              ]
+            },
+            "description": "Xóa mềm biến thể (yêu cầu tồn kho = 0 và không nằm trong phiếu nhập DRAFT)."
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Supplier Management (Nhà cung cấp)",
+      "item": [
+        {
+          "name": "Tạo nhà cung cấp (SUP-01)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Xưởng may mặc Hà Nội\",\n  \"phone\": \"0243123456\",\n  \"email\": \"xuongmayhn@example.com\",\n  \"address\": \"Đông Anh, Hà Nội\",\n  \"taxCode\": \"0102030405\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/suppliers",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "suppliers"
+              ]
+            },
+            "description": "Tạo nhà cung cấp mới."
+          }
+        },
+        {
+          "name": "Danh sách nhà cung cấp (SUP-02)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/suppliers?page=0&size=20&keyword=may&hasDebt=false",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "suppliers"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "20"
+                },
+                {
+                  "key": "keyword",
+                  "value": "may"
+                },
+                {
+                  "key": "hasDebt",
+                  "value": "false"
+                }
+              ]
+            },
+            "description": "Lấy danh sách nhà cung cấp, hỗ trợ lọc công nợ."
+          }
+        },
+        {
+          "name": "Chi tiết nhà cung cấp (SUP-03)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/suppliers/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "suppliers",
+                "1"
+              ]
+            },
+            "description": "Chi tiết NCC kèm 5 phiếu nhập gần nhất."
+          }
+        },
+        {
+          "name": "Cập nhật nhà cung cấp (SUP-04)",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Xưởng may mặc Hà Nội Updated\",\n  \"phone\": \"0243123456\",\n  \"email\": \"xuongmayhn_new@example.com\",\n  \"address\": \"Gia Lâm, Hà Nội\",\n  \"taxCode\": \"0102030405-001\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/suppliers/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "suppliers",
+                "1"
+              ]
+            },
+            "description": "Cập nhật thông tin NCC."
+          }
+        },
+        {
+          "name": "Xóa mềm nhà cung cấp (SUP-05)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/suppliers/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "suppliers",
+                "1"
+              ]
+            },
+            "description": "Xóa mềm nhà cung cấp (yêu cầu debtAmount = 0 và không có phiếu nhập DRAFT)."
+          }
+        }
+      ]
+    },
+    {
+      "name": "7. Import Receipts (Phiếu Nhập Hàng)",
+      "item": [
+        {
+          "name": "Tạo phiếu nhập nháp (DRAFT)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"supplierId\": 1,\n  \"items\": [\n    {\n      \"variantId\": 1,\n      \"quantity\": 100,\n      \"importPrice\": 150000.00\n    }\n  ],\n  \"paidAmount\": 10000000.00,\n  \"note\": \"Nhập hàng thử nghiệm\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/imports",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "imports"
+              ]
+            },
+            "description": "Tạo phiếu nhập ở dạng DRAFT (chưa ảnh hưởng kho và công nợ)."
+          }
+        },
+        {
+          "name": "Hoàn thành phiếu nhập (DRAFT -> COMPLETED)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/imports/1/complete",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "imports",
+                "1",
+                "complete"
+              ]
+            },
+            "description": "Hoàn thành phiếu nhập: cộng tồn kho, ghi thẻ kho, cập nhật công nợ."
+          }
+        },
+        {
+          "name": "Hủy phiếu nhập DRAFT (DRAFT -> CANCELLED)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/imports/1/cancel",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "imports",
+                "1",
+                "cancel"
+              ]
+            },
+            "description": "Hủy phiếu nhập đang ở dạng DRAFT."
+          }
+        },
+        {
+          "name": "Chi tiết phiếu nhập",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/imports/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "imports",
+                "1"
+              ]
+            },
+            "description": "Xem chi tiết phiếu nhập kèm danh sách hàng hóa."
+          }
+        },
+        {
+          "name": "Danh sách phiếu nhập (IR-01)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/imports?page=0&size=20&status=DRAFT",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "imports"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "20"
+                },
+                {
+                  "key": "status",
+                  "value": "DRAFT"
+                },
+                {
+                  "key": "supplierId",
+                  "value": "1",
+                  "disabled": true
+                },
+                {
+                  "key": "from",
+                  "value": "2026-01-01",
+                  "disabled": true
+                },
+                {
+                  "key": "to",
+                  "value": "2026-12-31",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Lấy danh sách phiếu nhập phân trang và bộ lọc."
+          }
+        },
+        {
+          "name": "Cập nhật phiếu nhập DRAFT (IR-02)",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"supplierId\": 1,\n  \"items\": [\n    {\n      \"variantId\": 1,\n      \"quantity\": 120,\n      \"importPrice\": 148000.00\n    }\n  ],\n  \"paidAmount\": 11000000.00,\n  \"note\": \"Sửa phiếu nhập tăng số lượng\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/imports/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "imports",
+                "1"
+              ]
+            },
+            "description": "Cập nhật nội dung phiếu nhập ở trạng thái DRAFT."
+          }
+        },
+        {
+          "name": "Phiếu nhập theo Supplier",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/imports/supplier/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "imports",
+                "supplier",
+                "1"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "8. Order & Sales (Bán hàng POS)",
+      "item": [
+        {
+          "name": "Thanh toán hóa đơn POS (Checkout)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"items\": [\n    {\n      \"variantId\": 1,\n      \"quantity\": 2\n    }\n  ],\n  \"paidAmount\": 600000.00,\n  \"note\": \"Khách đưa chẵn 600k\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/orders/checkout",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "orders",
+                "checkout"
+              ]
+            },
+            "description": "Tạo hóa đơn bán hàng POS mới (trừ kho, cộng điểm tích lũy, trả lại tiền thừa)."
+          }
+        },
+        {
+          "name": "Hủy hóa đơn & Hoàn kho (ORD-01)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/orders/550e8400-e29b-41d4-a716-446655440000/cancel",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "orders",
+                "550e8400-e29b-41d4-a716-446655440000",
+                "cancel"
+              ]
+            },
+            "description": "Hủy đơn hàng và hoàn trả lại tồn kho."
+          }
+        },
+        {
+          "name": "Danh sách hóa đơn (ORD-02)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/orders?page=0&size=20&status=COMPLETED",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "orders"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "20"
+                },
+                {
+                  "key": "status",
+                  "value": "COMPLETED"
+                },
+                {
+                  "key": "customerId",
+                  "value": "1",
+                  "disabled": true
+                },
+                {
+                  "key": "from",
+                  "value": "2026-07-01T00:00:00",
+                  "disabled": true
+                },
+                {
+                  "key": "to",
+                  "value": "2026-07-31T23:59:59",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Danh sách hóa đơn phân trang kèm bộ lọc."
+          }
+        }
+      ]
+    },
+    {
+      "name": "9. Reports & Analytics (Báo cáo)",
+      "item": [
+        {
+          "name": "Dashboard tổng quan",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/reports/dashboard",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "reports",
+                "dashboard"
+              ]
+            },
+            "description": "Dữ liệu tổng quan doanh thu, số đơn, top bán chạy trong ngày/tháng."
+          }
+        },
+        {
+          "name": "Báo cáo tài chính",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/reports/financial?from=2026-07-01T00:00:00&to=2026-07-31T23:59:59",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "reports",
+                "financial"
+              ],
+              "query": [
+                {
+                  "key": "from",
+                  "value": "2026-07-01T00:00:00"
+                },
+                {
+                  "key": "to",
+                  "value": "2026-07-31T23:59:59"
+                }
+              ]
+            },
+            "description": "Báo cáo tài chính chi tiết theo khoảng thời gian."
+          }
+        },
+        {
+          "name": "Top sản phẩm bán chạy",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/reports/top-selling?from=2026-07-01T00:00:00&to=2026-07-31T23:59:59&limit=10",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "reports",
+                "top-selling"
+              ],
+              "query": [
+                {
+                  "key": "from",
+                  "value": "2026-07-01T00:00:00"
+                },
+                {
+                  "key": "to",
+                  "value": "2026-07-31T23:59:59"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Danh sách các sản phẩm bán chạy nhất trong kỳ."
+          }
+        },
+        {
+          "name": "Báo cáo hàng tồn chậm (Dead Stock)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/reports/dead-stock?minInventory=5&days=90",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "reports",
+                "dead-stock"
+              ],
+              "query": [
+                {
+                  "key": "minInventory",
+                  "value": "5"
+                },
+                {
+                  "key": "days",
+                  "value": "90"
+                }
+              ]
+            },
+            "description": "Danh sách các biến thể tồn kho nhiều nhưng không bán được trong X ngày."
+          }
+        }
+      ]
+    },
+    {
+      "name": "10. Tenant Admin",
+      "item": [
+        {
+          "name": "Danh sách Tenant",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin/tenants",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "tenants"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Chi tiết Tenant",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin/tenants/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "tenants",
+                "1"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Đình chỉ Tenant",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin/tenants/1/suspend",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "tenants",
+                "1",
+                "suspend"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Kích hoạt Tenant",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin/tenants/1/activate",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "tenants",
+                "1",
+                "activate"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Xem trước Tenant",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin/tenants/1/preview",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "tenants",
+                "1",
+                "preview"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
